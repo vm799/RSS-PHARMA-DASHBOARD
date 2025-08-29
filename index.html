@@ -3,70 +3,489 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pharma RSS Headlines</title>
+<title>Pharma Lead Generation Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
-  h1 { color: #1f4e79; }
-  .feed-section { margin-bottom: 40px; }
-  .feed-title { font-size: 1.3em; font-weight: bold; margin-bottom: 10px; }
-  ul { list-style-type: none; padding: 0; }
-  li { background: #fff; margin-bottom: 5px; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  a { text-decoration: none; color: #1f4e79; }
-  a:hover { text-decoration: underline; }
+  .trigger-critical { border-left: 6px solid #dc2626; }
+  .trigger-warning { border-left: 6px solid #f59e0b; }
+  .trigger-patent { border-left: 6px solid #8b5cf6; }
+  .trigger-compliance { border-left: 6px solid #ef4444; }
+  .trigger-investment { border-left: 6px solid #10b981; }
+  .trigger-trial { border-left: 6px solid #3b82f6; }
+  .loading-spinner { animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn 0.5s ease-in; }
+  @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
 </style>
 </head>
-<body>
-<h1>Pharma RSS Headlines</h1>
-<div id="feeds"></div>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- Header -->
+<header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
+  <div class="container mx-auto">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">Pharma Lead Generation Dashboard</h1>
+        <p class="text-blue-100 mt-1">Real-time triggers for medical research platform outreach</p>
+      </div>
+      <div class="text-right">
+        <div class="text-sm text-blue-100">Last Updated:</div>
+        <div id="lastUpdate" class="text-lg font-semibold">Loading...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Stats Dashboard -->
+<div class="container mx-auto p-6">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-2xl font-bold text-red-600" id="criticalCount">0</div>
+      <div class="text-gray-600">Critical Triggers</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-2xl font-bold text-orange-600" id="warningCount">0</div>
+      <div class="text-gray-600">Warning Letters</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-2xl font-bold text-purple-600" id="patentCount">0</div>
+      <div class="text-gray-600">Patent Issues</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-2xl font-bold text-green-600" id="investmentCount">0</div>
+      <div class="text-gray-600">Investment Opportunities</div>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-wrap gap-4 items-center">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Trigger:</label>
+        <select id="triggerFilter" class="border rounded px-3 py-2">
+          <option value="">All Triggers</option>
+          <option value="warning-letter">Warning Letters (483s)</option>
+          <option value="patent-expiry">Patent Expiry</option>
+          <option value="compliance-issue">Compliance Issues</option>
+          <option value="trial-difficulty">Trial Difficulties</option>
+          <option value="investment-need">Investment Needs</option>
+          <option value="regulatory-delay">Regulatory Delays</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Priority:</label>
+        <select id="priorityFilter" class="border rounded px-3 py-2">
+          <option value="">All Priority</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+        </select>
+      </div>
+      <button onclick="refreshData()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <span id="refreshButton">Refresh Data</span>
+      </button>
+      <button onclick="exportLeads()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Export Leads
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="loading" class="text-center py-8 hidden">
+    <div class="loading-spinner inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+    <p class="mt-2 text-gray-600">Scanning pharmaceutical news for triggers...</p>
+  </div>
+
+  <!-- Triggers List -->
+  <div id="triggersContainer" class="space-y-4">
+    <!-- Dynamic content will be inserted here -->
+  </div>
+</div>
+
+<!-- Lead Details Modal -->
+<div id="leadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-90vh overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Lead Details</h3>
+          <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="modalContent">
+          <!-- Modal content will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-// -----------------------------
-// 1. List of RSS feeds
-// -----------------------------
+// Enhanced RSS feeds targeting regulatory and business triggers
 const rssFeeds = {
-  "Cafepharma": "https://api.rss2json.com/v1/api.json?rss_url=http://www.cafepharma.com/rss.xml",
+  "FDA News": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/food-and-drug-administration/rss.xml",
+  "FDA Warning Letters": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters",
   "Pharmaphorum": "https://api.rss2json.com/v1/api.json?rss_url=https://pharmaphorum.com/rssfeed/news",
   "Pharmaceutical Executive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmexec.com/rss",
   "FDA Law Blog": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thefdalawblog.com/feed",
   "PharmTech News": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmtech.com/rss",
-  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fiercebiotech.com/rss/feed"
-  // Add more feeds here as needed
+  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fiercebiotech.com/rss/feed",
+  "BioPharma Dive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.biopharmadive.com/feeds/news/",
+  "Regulatory Affairs Professionals": "https://api.rss2json.com/v1/api.json?rss_url=https://www.raps.org/news-and-articles/news-articles"
 };
 
-// -----------------------------
-// 2. Function to fetch and render feeds
-// -----------------------------
-const feedsContainer = document.getElementById("feeds");
+// Trigger keywords and their categories
+const triggerKeywords = {
+  'warning-letter': ['warning letter', '483', 'FDA inspection', 'compliance violation', 'regulatory action', 'enforcement', 'violation', 'non-compliance'],
+  'patent-expiry': ['patent expiry', 'patent cliff', 'exclusivity', 'generic competition', 'patent challenge', 'intellectual property'],
+  'compliance-issue': ['recall', 'safety issue', 'adverse event', 'regulatory issue', 'compliance failure', 'quality issue'],
+  'trial-difficulty': ['trial failure', 'phase II', 'endpoint not met', 'enrollment challenge', 'trial delay', 'FDA hold'],
+  'investment-need': ['funding', 'investment', 'capital raise', 'series', 'IPO', 'financial difficulty', 'cash runway'],
+  'regulatory-delay': ['FDA delay', 'approval delay', 'regulatory setback', 'CRL', 'complete response letter']
+};
 
-Object.keys(rssFeeds).forEach(feedName => {
-  fetch(rssFeeds[feedName])
-    .then(res => res.json())
-    .then(data => {
-      const section = document.createElement("div");
-      section.className = "feed-section";
+let allTriggers = [];
+let filteredTriggers = [];
 
-      const title = document.createElement("div");
-      title.className = "feed-title";
-      title.textContent = feedName;
-      section.appendChild(title);
-
-      const list = document.createElement("ul");
-      data.items.slice(0, 10).forEach(item => { // show top 10 headlines
-        const li = document.createElement("li");
-        const link = document.createElement("a");
-        link.href = item.link;
-        link.target = "_blank";
-        link.textContent = item.title;
-        li.appendChild(link);
-        list.appendChild(li);
-      });
-      section.appendChild(list);
-      feedsContainer.appendChild(section);
-    })
-    .catch(err => {
-      console.error(`Error fetching ${feedName}:`, err);
-    });
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+  refreshData();
+  
+  // Set up filter event listeners
+  document.getElementById('triggerFilter').addEventListener('change', filterTriggers);
+  document.getElementById('priorityFilter').addEventListener('change', filterTriggers);
 });
+
+async function refreshData() {
+  const loading = document.getElementById('loading');
+  const refreshButton = document.getElementById('refreshButton');
+  
+  loading.classList.remove('hidden');
+  refreshButton.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Refreshing...';
+  
+  allTriggers = [];
+  
+  try {
+    const feedPromises = Object.entries(rssFeeds).map(async ([feedName, feedUrl]) => {
+      try {
+        const response = await fetch(feedUrl);
+        const data = await response.json();
+        
+        if (data.items) {
+          data.items.forEach(item => {
+            const trigger = analyzeTrigger(item, feedName);
+            if (trigger) {
+              allTriggers.push(trigger);
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching ${feedName}:`, error);
+      }
+    });
+    
+    await Promise.all(feedPromises);
+    
+    // Sort by priority and date
+    allTriggers.sort((a, b) => {
+      const priorityWeight = { critical: 3, high: 2, medium: 1 };
+      return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0) || 
+             new Date(b.date) - new Date(a.date);
+    });
+    
+    filteredTriggers = [...allTriggers];
+    updateStats();
+    renderTriggers();
+    
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+    
+  } finally {
+    loading.classList.add('hidden');
+    refreshButton.innerHTML = 'Refresh Data';
+  }
+}
+
+function analyzeTrigger(item, source) {
+  const title = item.title.toLowerCase();
+  const description = (item.description || '').toLowerCase();
+  const content = title + ' ' + description;
+  
+  let triggerType = null;
+  let priority = 'medium';
+  let company = extractCompanyName(item.title);
+  
+  // Analyze for trigger keywords
+  for (const [type, keywords] of Object.entries(triggerKeywords)) {
+    if (keywords.some(keyword => content.includes(keyword.toLowerCase()))) {
+      triggerType = type;
+      break;
+    }
+  }
+  
+  if (!triggerType) return null;
+  
+  // Determine priority based on content
+  if (content.includes('warning letter') || content.includes('483') || content.includes('recall')) {
+    priority = 'critical';
+  } else if (content.includes('fda') || content.includes('compliance') || content.includes('failure')) {
+    priority = 'high';
+  }
+  
+  return {
+    id: Math.random().toString(36).substr(2, 9),
+    title: item.title,
+    description: item.description || '',
+    link: item.link,
+    source: source,
+    date: item.pubDate || new Date().toISOString(),
+    triggerType: triggerType,
+    priority: priority,
+    company: company,
+    actionable: generateActionableInsights(triggerType, company, item.title),
+    contacts: generatePotentialContacts(company)
+  };
+}
+
+function extractCompanyName(title) {
+  // Simple company name extraction - can be enhanced with more sophisticated NLP
+  const commonPharmaCompanies = [
+    'Pfizer', 'Johnson & Johnson', 'Roche', 'Novartis', 'Merck', 'AbbVie', 'Sanofi',
+    'GlaxoSmithKline', 'Gilead', 'Amgen', 'Bristol Myers Squibb', 'AstraZeneca',
+    'Eli Lilly', 'Biogen', 'Regeneron', 'Vertex', 'Moderna', 'BioNTech'
+  ];
+  
+  for (const company of commonPharmaCompanies) {
+    if (title.toLowerCase().includes(company.toLowerCase())) {
+      return company;
+    }
+  }
+  
+  // Try to extract company names from title patterns
+  const companyPattern = /([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)*(?:,? Inc\.?|,? Corp\.?|,? Ltd\.?|,? Pharmaceuticals?|,? Biotech)?)/g;
+  const matches = title.match(companyPattern);
+  
+  return matches ? matches[0] : 'Unknown Company';
+}
+
+function generateActionableInsights(triggerType, company, title) {
+  const insights = {
+    'warning-letter': `${company} received FDA warning letter - compliance issues present. Opportunity to offer regulatory data management and compliance monitoring solutions.`,
+    'patent-expiry': `${company} facing patent cliff challenges. Opportunity to provide competitive intelligence and market access data.`,
+    'compliance-issue': `${company} experiencing compliance challenges. Opportunity to offer quality management and regulatory data solutions.`,
+    'trial-difficulty': `${company} struggling with clinical trials. Opportunity to provide trial optimization and data analytics services.`,
+    'investment-need': `${company} seeking funding. Opportunity to provide valuation data and competitive market analysis.`,
+    'regulatory-delay': `${company} facing regulatory delays. Opportunity to offer regulatory intelligence and submission support data.`
+  };
+  
+  return insights[triggerType] || `Opportunity to engage ${company} with relevant medical research platform solutions.`;
+}
+
+function generatePotentialContacts(company) {
+  return [
+    { role: 'Chief Medical Officer', email: `cmo@${company.toLowerCase().replace(/\s+/g, '')}.com` },
+    { role: 'VP Regulatory Affairs', email: `regulatory@${company.toLowerCase().replace(/\s+/g, '')}.com` },
+    { role: 'Head of Clinical Development', email: `clinical@${company.toLowerCase().replace(/\s+/g, '')}.com` },
+    { role: 'Director of Market Access', email: `marketaccess@${company.toLowerCase().replace(/\s+/g, '')}.com` }
+  ];
+}
+
+function updateStats() {
+  const stats = {
+    critical: allTriggers.filter(t => t.priority === 'critical').length,
+    warning: allTriggers.filter(t => t.triggerType === 'warning-letter').length,
+    patent: allTriggers.filter(t => t.triggerType === 'patent-expiry').length,
+    investment: allTriggers.filter(t => t.triggerType === 'investment-need').length
+  };
+  
+  document.getElementById('criticalCount').textContent = stats.critical;
+  document.getElementById('warningCount').textContent = stats.warning;
+  document.getElementById('patentCount').textContent = stats.patent;
+  document.getElementById('investmentCount').textContent = stats.investment;
+}
+
+function renderTriggers() {
+  const container = document.getElementById('triggersContainer');
+  
+  if (filteredTriggers.length === 0) {
+    container.innerHTML = '<div class="text-center py-8 text-gray-500">No triggers found matching your filters.</div>';
+    return;
+  }
+  
+  container.innerHTML = filteredTriggers.map(trigger => `
+    <div class="bg-white rounded-lg shadow-md p-6 trigger-${trigger.triggerType} fade-in cursor-pointer hover:shadow-lg transition-shadow"
+         onclick="showLeadDetails('${trigger.id}')">
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2 py-1 text-xs rounded-full bg-${getPriorityColor(trigger.priority)}-100 text-${getPriorityColor(trigger.priority)}-800">
+              ${trigger.priority.toUpperCase()}
+            </span>
+            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+              ${getTriggerLabel(trigger.triggerType)}
+            </span>
+            <span class="text-sm text-gray-500">${new Date(trigger.date).toLocaleDateString()}</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">${trigger.title}</h3>
+          <p class="text-gray-600 mb-3">${trigger.description.substring(0, 150)}...</p>
+          <div class="text-sm font-medium text-blue-600">📊 ${trigger.company}</div>
+        </div>
+        <div class="ml-4 text-right">
+          <div class="text-xs text-gray-500">Source:</div>
+          <div class="text-sm font-medium">${trigger.source}</div>
+        </div>
+      </div>
+      <div class="bg-green-50 border border-green-200 rounded p-3">
+        <div class="text-sm font-medium text-green-800 mb-1">💡 Outreach Opportunity:</div>
+        <div class="text-sm text-green-700">${trigger.actionable}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterTriggers() {
+  const triggerFilter = document.getElementById('triggerFilter').value;
+  const priorityFilter = document.getElementById('priorityFilter').value;
+  
+  filteredTriggers = allTriggers.filter(trigger => {
+    const matchesTrigger = !triggerFilter || trigger.triggerType === triggerFilter;
+    const matchesPriority = !priorityFilter || trigger.priority === priorityFilter;
+    return matchesTrigger && matchesPriority;
+  });
+  
+  renderTriggers();
+}
+
+function showLeadDetails(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) return;
+  
+  const modalContent = document.getElementById('modalContent');
+  modalContent.innerHTML = `
+    <div class="space-y-6">
+      <div>
+        <h4 class="text-lg font-semibold mb-2">Company: ${trigger.company}</h4>
+        <p class="text-gray-600">${trigger.title}</p>
+      </div>
+      
+      <div>
+        <h5 class="font-semibold mb-2">Trigger Details:</h5>
+        <div class="bg-gray-50 p-4 rounded">
+          <p><strong>Type:</strong> ${getTriggerLabel(trigger.triggerType)}</p>
+          <p><strong>Priority:</strong> ${trigger.priority.toUpperCase()}</p>
+          <p><strong>Date:</strong> ${new Date(trigger.date).toLocaleDateString()}</p>
+          <p><strong>Source:</strong> ${trigger.source}</p>
+        </div>
+      </div>
+      
+      <div>
+        <h5 class="font-semibold mb-2">Outreach Strategy:</h5>
+        <div class="bg-green-50 border border-green-200 p-4 rounded">
+          <p>${trigger.actionable}</p>
+        </div>
+      </div>
+      
+      <div>
+        <h5 class="font-semibold mb-2">Potential Contacts:</h5>
+        <div class="space-y-2">
+          ${trigger.contacts.map(contact => `
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded flex justify-between items-center">
+              <div>
+                <div class="font-medium">${contact.role}</div>
+                <div class="text-sm text-gray-600">${contact.email}</div>
+              </div>
+              <button onclick="copyEmail('${contact.email}')" class="text-blue-600 hover:text-blue-800">
+                📧 Copy
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div class="flex gap-4">
+        <a href="${trigger.link}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          View Original Article
+        </a>
+        <button onclick="markAsContacted('${trigger.id}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          Mark as Contacted
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('leadModal').classList.add('hidden');
+}
+
+function copyEmail(email) {
+  navigator.clipboard.writeText(email);
+  alert('Email copied to clipboard!');
+}
+
+function markAsContacted(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (trigger) {
+    trigger.contacted = true;
+    alert('Lead marked as contacted!');
+    closeModal();
+    renderTriggers();
+  }
+}
+
+function exportLeads() {
+  const csvContent = [
+    ['Company', 'Trigger Type', 'Priority', 'Date', 'Title', 'Outreach Strategy', 'Contact Role', 'Contact Email', 'Source URL'].join(','),
+    ...filteredTriggers.map(trigger => 
+      trigger.contacts.map(contact => [
+        `"${trigger.company}"`,
+        `"${getTriggerLabel(trigger.triggerType)}"`,
+        `"${trigger.priority}"`,
+        `"${new Date(trigger.date).toLocaleDateString()}"`,
+        `"${trigger.title.replace(/"/g, '""')}"`,
+        `"${trigger.actionable.replace(/"/g, '""')}"`,
+        `"${contact.role}"`,
+        `"${contact.email}"`,
+        `"${trigger.link}"`
+      ].join(','))
+    ).flat()
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pharma-leads-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+function getPriorityColor(priority) {
+  const colors = { critical: 'red', high: 'orange', medium: 'yellow' };
+  return colors[priority] || 'gray';
+}
+
+function getTriggerLabel(triggerType) {
+  const labels = {
+    'warning-letter': 'Warning Letter/483',
+    'patent-expiry': 'Patent Expiry',
+    'compliance-issue': 'Compliance Issue',
+    'trial-difficulty': 'Trial Difficulty',
+    'investment-need': 'Investment Need',
+    'regulatory-delay': 'Regulatory Delay'
+  };
+  return labels[triggerType] || triggerType;
+}
+
+// Auto-refresh every 30 minutes
+setInterval(refreshData, 30 * 60 * 1000);
 </script>
 </body>
 </html>
