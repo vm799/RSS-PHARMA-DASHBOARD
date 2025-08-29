@@ -519,7 +519,8 @@ function getTriggerLabel(triggerType) {
 const SYNETICX_INFO = {
   companyName: 'SyneticX',
   tagline: 'Medical Intelligence Consultancy',
-  website: 'www.syneticx.com',
+  website: 'https://www.syneticx.com',
+  coFounders: ['Rohan Mehmi', 'Alex MacGregor'],
   valueProps: {
     'warning-letter': {
       expertise: 'regulatory compliance optimization',
@@ -717,9 +718,9 @@ function generateEmailBody(trigger, storyDetails, valueProps) {
   
   return `Dear [Contact Name],
 
-I hope this message finds you well. I'm reaching out from ${SYNETICX_INFO.companyName}, a leading ${SYNETICX_INFO.tagline} that specializes in ${valueProps.expertise}.
+I hope this message finds you well. I'm reaching out from ${SYNETICX_INFO.companyName}, a leading ${SYNETICX_INFO.tagline} founded by ${SYNETICX_INFO.coFounders.join(' and ')} that specializes in ${valueProps.expertise}.
 
-I noticed the recent development regarding ${trigger.company}'s ${storyDetails.issue || 'situation'} as reported in ${trigger.source}. Having worked extensively with pharmaceutical companies facing similar challenges, I understand the complexities and strategic considerations this presents for your organization.
+I noticed the recent development regarding ${trigger.company}'s ${storyDetails.issue || 'situation'} as reported in ${trigger.source}. Having worked extensively with pharmaceutical companies facing similar challenges, our team understands the complexities and strategic considerations this presents for your organization.
 
 At ${SYNETICX_INFO.companyName}, we have a proven track record in addressing these exact challenges. Our ${valueProps.solution} has enabled pharmaceutical leaders to ${valueProps.benefit}. Specifically, we have ${valueProps.caseStudy}.
 
@@ -742,6 +743,8 @@ Best regards,
 ${SYNETICX_INFO.companyName} | ${SYNETICX_INFO.tagline}
 [Your Title] | [Your Phone] | [Your Email]
 ${SYNETICX_INFO.website}
+
+Founded by ${SYNETICX_INFO.coFounders.join(' & ')}
 
 ---
 This communication is confidential and intended solely for the addressee. If you have received this message in error, please notify the sender immediately.`;
