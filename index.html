@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharma RSS Headlines</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+  h1 { color: #1f4e79; }
+  .feed-section { margin-bottom: 40px; }
+  .feed-title { font-size: 1.3em; font-weight: bold; margin-bottom: 10px; }
+  ul { list-style-type: none; padding: 0; }
+  li { background: #fff; margin-bottom: 5px; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  a { text-decoration: none; color: #1f4e79; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>Pharma RSS Headlines</h1>
+<div id="feeds"></div>
+
+<script>
+// -----------------------------
+// 1. List of RSS feeds
+// -----------------------------
+const rssFeeds = {
+  "Cafepharma": "https://api.rss2json.com/v1/api.json?rss_url=http://www.cafepharma.com/rss.xml",
+  "Pharmaphorum": "https://api.rss2json.com/v1/api.json?rss_url=https://pharmaphorum.com/rssfeed/news",
+  "Pharmaceutical Executive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmexec.com/rss",
+  "FDA Law Blog": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thefdalawblog.com/feed",
+  "PharmTech News": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmtech.com/rss",
+  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fiercebiotech.com/rss/feed"
+  // Add more feeds here as needed
+};
+
+// -----------------------------
+// 2. Function to fetch and render feeds
+// -----------------------------
+const feedsContainer = document.getElementById("feeds");
+
+Object.keys(rssFeeds).forEach(feedName => {
+  fetch(rssFeeds[feedName])
+    .then(res => res.json())
+    .then(data => {
+      const section = document.createElement("div");
+      section.className = "feed-section";
+
+      const title = document.createElement("div");
+      title.className = "feed-title";
+      title.textContent = feedName;
+      section.appendChild(title);
+
+      const list = document.createElement("ul");
+      data.items.slice(0, 10).forEach(item => { // show top 10 headlines
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = item.link;
+        link.target = "_blank";
+        link.textContent = item.title;
+        li.appendChild(link);
+        list.appendChild(li);
+      });
+      section.appendChild(list);
+      feedsContainer.appendChild(section);
+    })
+    .catch(err => {
+      console.error(`Error fetching ${feedName}:`, err);
+    });
+});
+</script>
+</body>
+</html>
