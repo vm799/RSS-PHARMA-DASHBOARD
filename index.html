@@ -367,6 +367,29 @@ function generatePotentialContacts(company) {
   ];
 }
 
+// Source validation system
+const VALIDATED_SOURCES = {
+  "FDA News": { validated: true, credibility: "high" },
+  "FDA Warning Letters": { validated: true, credibility: "high" },
+  "Pharmaphorum": { validated: true, credibility: "high" },
+  "Pharmaceutical Executive": { validated: true, credibility: "high" },
+  "FDA Law Blog": { validated: true, credibility: "high" },
+  "PharmTech News": { validated: true, credibility: "medium" },
+  "FierceBiotech": { validated: true, credibility: "high" },
+  "BioPharma Dive": { validated: true, credibility: "high" },
+  "Regulatory Affairs Professionals": { validated: true, credibility: "high" }
+};
+
+function getSourceValidation(source) {
+  const validation = VALIDATED_SOURCES[source];
+  if (validation && validation.validated) {
+    return validation.credibility === 'high' ? 
+      '<span class="source-validated" title="High Credibility Source">✅</span>' :
+      '<span class="source-validated" title="Validated Source">✓</span>';
+  }
+  return '<span class="source-unvalidated" title="Unvalidated Source">❓</span>';
+}
+
 function updateStats() {
   const stats = {
     critical: allTriggers.filter(t => t.priority === 'critical').length,
@@ -870,6 +893,166 @@ function copyEmailContent(triggerId) {
       alert('Failed to copy email. Please select and copy manually.');
     });
   }
+}
+
+// Modal functions for CTA buttons
+function openEmailModal(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) return;
+  
+  const email = generatePersonalizedEmail(trigger);
+  const modalContent = `
+    <div class="p-4">
+      <h3 class="text-lg font-semibold mb-3">📧 Generated Email for ${trigger.company}</h3>
+      <div class="bg-gray-50 p-4 rounded border max-h-64 overflow-y-auto">
+        <pre class="text-sm whitespace-pre-wrap">${email}</pre>
+      </div>
+      <div class="mt-4 flex gap-3">
+        <button onclick="copyEmailContent()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          📋 Copy Email
+        </button>
+        <button onclick="closeEmailModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Create or update modal
+  let modal = document.getElementById('emailModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'emailModal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    document.body.appendChild(modal);
+  }
+  
+  modal.innerHTML = `<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4">${modalContent}</div>`;
+  modal.classList.remove('hidden');
+  modal.dataset.email = email; // Store email for copying
+}
+
+function openLinkedInModal(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) return;
+  
+  const linkedinPost = generateLinkedInPost(trigger);
+  const modalContent = `
+    <div class="p-4">
+      <h3 class="text-lg font-semibold mb-3">🔗 LinkedIn Post for ${trigger.company}</h3>
+      <div class="bg-gray-50 p-4 rounded border max-h-64 overflow-y-auto">
+        <pre class="text-sm whitespace-pre-wrap">${linkedinPost}</pre>
+      </div>
+      <div class="mt-4 flex gap-3">
+        <button onclick="copyLinkedInContent()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          📋 Copy Post
+        </button>
+        <button onclick="closeLinkedInModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Create or update modal
+  let modal = document.getElementById('linkedinModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'linkedinModal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    document.body.appendChild(modal);
+  }
+  
+  modal.innerHTML = `<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4">${modalContent}</div>`;
+  modal.classList.remove('hidden');
+  modal.dataset.post = linkedinPost; // Store post for copying
+}
+
+function closeEmailModal() {
+  const modal = document.getElementById('emailModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function closeLinkedInModal() {
+  const modal = document.getElementById('linkedinModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function copyEmailContent() {
+  const modal = document.getElementById('emailModal');
+  const email = modal?.dataset.email;
+  if (email) {
+    navigator.clipboard.writeText(email).then(() => {
+      alert('Email copied to clipboard!');
+    }).catch(() => {
+      alert('Failed to copy. Please select and copy manually.');
+    });
+  }
+}
+
+function copyLinkedInContent() {
+  const modal = document.getElementById('linkedinModal');
+  const post = modal?.dataset.post;
+  if (post) {
+    navigator.clipboard.writeText(post).then(() => {
+      alert('LinkedIn post copied to clipboard!');
+    }).catch(() => {
+      alert('Failed to copy. Please select and copy manually.');
+    });
+  }
+}
+
+function generateLinkedInPost(trigger) {
+  const insights = {
+    'warning-letter': `🚨 ${trigger.company} just received an FDA warning letter.
+
+What this means for the industry:
+• Increased scrutiny on manufacturing standards
+• Potential supply chain disruptions
+• Opportunity for competitors with robust compliance
+
+💡 Key takeaway: Proactive compliance monitoring isn't just regulatory—it's competitive advantage.`,
+    'patent-expiry': `⏰ Patent cliff alert: ${trigger.company}'s exclusivity window is narrowing.
+
+📊 Industry impact:
+• Generic competition incoming
+• Market dynamics shifting
+• Strategic repositioning critical`,
+    'trial-difficulty': `🧪 ${trigger.company}'s latest trial results highlight clinical development challenges.
+
+Why this matters:
+• 90% of clinical trials face enrollment or endpoint challenges
+• Each delay costs $600K-$8M per day
+• Predictive analytics can reduce failure rates by 40%`,
+    'compliance-issue': `⚠️ ${trigger.company}'s recent compliance challenge underscores industry reality.
+
+The new compliance landscape:
+• Regulatory expectations evolving rapidly
+• Quality standards becoming more stringent
+• Proactive monitoring now table stakes`,
+    'investment-need': `💰 ${trigger.company}'s funding needs reflect broader market dynamics.
+
+What investors are watching:
+• Pipeline differentiation
+• Regulatory pathway clarity
+• Market access potential`,
+    'regulatory-delay': `📋 ${trigger.company} faces regulatory delays.
+
+Industry implications:
+• FDA scrutiny continues to intensify
+• Strategic planning becomes critical
+• Early intelligence provides competitive advantage`
+  };
+  
+  const insight = insights[trigger.triggerType] || `📰 Recent developments at ${trigger.company} highlight key industry trends.`;
+  
+  return `${insight}
+
+💡 At SyneticX, we help pharmaceutical companies turn market intelligence into competitive advantage.
+
+🎯 How is your organization staying ahead of industry changes?
+
+#RegulatoryAffairs #FDA #BioPharma #SyneticX #PharmaIntelligence`;
 }
 
 // Auto-refresh every 30 minutes
