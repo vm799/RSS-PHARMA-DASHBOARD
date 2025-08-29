@@ -16,6 +16,9 @@
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   .fade-in { animation: fadeIn 0.5s ease-in; }
   @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+  .email-preview { max-height: 400px; overflow-y: auto; }
+  .copy-success { animation: flash 0.5s ease-in-out; }
+  @keyframes flash { 0%, 100% { background-color: #10b981; } 50% { background-color: #34d399; } }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -405,7 +408,24 @@ function showLeadDetails(triggerId) {
         </div>
       </div>
       
-      <div class="flex gap-4">
+      <div>
+        <h5 class="font-semibold mb-2">📧 Generated Email Copy:</h5>
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded email-preview">
+          <div class="text-sm text-gray-700 whitespace-pre-line" id="emailContent-${trigger.id}">
+            ${generatePersonalizedEmail(trigger)}
+          </div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button onclick="copyEmailContent('${trigger.id}')" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm">
+            📋 Copy Email
+          </button>
+          <button onclick="regenerateEmail('${trigger.id}')" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm">
+            🔄 Regenerate
+          </button>
+        </div>
+      </div>
+      
+      <div class="flex gap-4 mt-6">
         <a href="${trigger.link}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           View Original Article
         </a>
@@ -440,9 +460,14 @@ function markAsContacted(triggerId) {
 
 function exportLeads() {
   const csvContent = [
-    ['Company', 'Trigger Type', 'Priority', 'Date', 'Title', 'Outreach Strategy', 'Contact Role', 'Contact Email', 'Source URL'].join(','),
-    ...filteredTriggers.map(trigger => 
-      trigger.contacts.map(contact => [
+    ['Company', 'Trigger Type', 'Priority', 'Date', 'Title', 'Outreach Strategy', 'Contact Role', 'Contact Email', 'Email Subject', 'Generated Email Copy', 'Source URL'].join(','),
+    ...filteredTriggers.map(trigger => {
+      const emailContent = generatePersonalizedEmail(trigger);
+      const emailLines = emailContent.split('\n');
+      const subject = emailLines[0].replace('Subject: ', '');
+      const emailBody = emailLines.slice(2).join('\n'); // Skip subject and empty line
+      
+      return trigger.contacts.map(contact => [
         `"${trigger.company}"`,
         `"${getTriggerLabel(trigger.triggerType)}"`,
         `"${trigger.priority}"`,
@@ -451,9 +476,11 @@ function exportLeads() {
         `"${trigger.actionable.replace(/"/g, '""')}"`,
         `"${contact.role}"`,
         `"${contact.email}"`,
+        `"${subject.replace(/"/g, '""')}"`,
+        `"${emailBody.replace(/"/g, '""')}"`,
         `"${trigger.link}"`
-      ].join(','))
-    ).flat()
+      ].join(','));
+    }).flat()
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -482,6 +509,285 @@ function getTriggerLabel(triggerType) {
     'regulatory-delay': 'Regulatory Delay'
   };
   return labels[triggerType] || triggerType;
+}
+
+// =====================================
+// SYNETICX EMAIL GENERATION SYSTEM
+// =====================================
+
+// SyneticX company information and value propositions
+const SYNETICX_INFO = {
+  companyName: 'SyneticX',
+  tagline: 'Medical Intelligence Consultancy',
+  website: 'www.syneticx.com',
+  valueProps: {
+    'warning-letter': {
+      expertise: 'regulatory compliance optimization',
+      solution: 'AI-powered compliance monitoring and predictive analytics',
+      benefit: 'prevent future regulatory issues and accelerate approvals',
+      caseStudy: 'helped 15+ pharmaceutical companies achieve zero 483 observations over 2 years'
+    },
+    'patent-expiry': {
+      expertise: 'competitive intelligence and market access strategy',
+      solution: 'comprehensive patent landscape analysis and generic entry predictions',
+      benefit: 'maximize exclusivity periods and prepare for competitive threats',
+      caseStudy: 'generated $300M+ in preserved revenue through strategic patent cliff management'
+    },
+    'compliance-issue': {
+      expertise: 'quality management and regulatory remediation',
+      solution: 'real-time quality intelligence and remediation roadmaps',
+      benefit: 'resolve compliance issues faster and prevent recurring problems',
+      caseStudy: 'reduced average remediation time by 60% for Fortune 500 pharma clients'
+    },
+    'trial-difficulty': {
+      expertise: 'clinical development optimization',
+      solution: 'predictive trial analytics and regulatory strategy consulting',
+      benefit: 'improve trial success rates and accelerate time-to-market',
+      caseStudy: 'increased Phase II success rates by 40% through data-driven protocol optimization'
+    },
+    'investment-need': {
+      expertise: 'pharmaceutical valuation and due diligence',
+      solution: 'comprehensive market intelligence and competitive analysis',
+      benefit: 'support funding rounds with robust data and market insights',
+      caseStudy: 'supported $2B+ in pharmaceutical transactions with critical market intelligence'
+    },
+    'regulatory-delay': {
+      expertise: 'regulatory strategy and submission optimization',
+      solution: 'FDA interaction intelligence and submission enhancement services',
+      benefit: 'navigate regulatory challenges and accelerate approval timelines',
+      caseStudy: 'reduced average CRL resolution time by 8 months for biotech clients'
+    },
+    'orphan-drug': {
+      expertise: 'rare disease market access and regulatory pathways',
+      solution: 'specialized orphan drug development intelligence',
+      benefit: 'maximize rare disease opportunities and expedited pathways',
+      caseStudy: 'secured orphan designation for 25+ rare disease programs'
+    },
+    'merger-acquisition': {
+      expertise: 'pharmaceutical M&A intelligence and due diligence',
+      solution: 'comprehensive asset valuation and competitive positioning analysis',
+      benefit: 'make informed strategic decisions with deep market insights',
+      caseStudy: 'provided critical intelligence for $5B+ in pharmaceutical transactions'
+    }
+  }
+};
+
+function generatePersonalizedEmail(trigger) {
+  const valueProps = SYNETICX_INFO.valueProps[trigger.triggerType] || SYNETICX_INFO.valueProps['compliance-issue'];
+  
+  // Extract specific details from the news story
+  const storyDetails = extractStoryDetails(trigger);
+  
+  // Generate subject line
+  const subject = generateSubjectLine(trigger, storyDetails);
+  
+  // Generate email body
+  const emailBody = generateEmailBody(trigger, storyDetails, valueProps);
+  
+  return `Subject: ${subject}\n\n${emailBody}`;
+}
+
+function extractStoryDetails(trigger) {
+  const title = trigger.title.toLowerCase();
+  const description = trigger.description.toLowerCase();
+  
+  let details = {
+    issue: '',
+    severity: '',
+    impact: '',
+    timeframe: ''
+  };
+  
+  // Extract specific issue details based on trigger type
+  switch (trigger.triggerType) {
+    case 'warning-letter':
+      details.issue = extractWarningLetterDetails(title, description);
+      details.severity = title.includes('serious') || title.includes('significant') ? 'serious' : 'standard';
+      break;
+    case 'patent-expiry':
+      details.issue = extractPatentDetails(title, description);
+      details.timeframe = extractTimeframe(title, description);
+      break;
+    case 'compliance-issue':
+      details.issue = extractComplianceDetails(title, description);
+      details.impact = extractImpactDetails(title, description);
+      break;
+    case 'trial-difficulty':
+      details.issue = extractTrialDetails(title, description);
+      details.severity = title.includes('failed') || title.includes('terminated') ? 'high' : 'medium';
+      break;
+    case 'investment-need':
+      details.issue = extractInvestmentDetails(title, description);
+      details.timeframe = extractTimeframe(title, description);
+      break;
+    case 'regulatory-delay':
+      details.issue = extractRegulatoryDetails(title, description);
+      details.timeframe = extractTimeframe(title, description);
+      break;
+  }
+  
+  return details;
+}
+
+function extractWarningLetterDetails(title, description) {
+  if (title.includes('manufacturing')) return 'manufacturing violations';
+  if (title.includes('clinical')) return 'clinical trial deficiencies';
+  if (title.includes('quality')) return 'quality control issues';
+  if (title.includes('data')) return 'data integrity concerns';
+  if (title.includes('gmp') || title.includes('cgmp')) return 'cGMP compliance violations';
+  return 'regulatory compliance deficiencies';
+}
+
+function extractPatentDetails(title, description) {
+  if (title.includes('expir')) return 'patent expiration';
+  if (title.includes('challenge')) return 'patent challenge';
+  if (title.includes('litigation')) return 'patent litigation';
+  if (title.includes('cliff')) return 'patent cliff';
+  return 'intellectual property concerns';
+}
+
+function extractComplianceDetails(title, description) {
+  if (title.includes('recall')) return 'product recall';
+  if (title.includes('contamina')) return 'contamination issues';
+  if (title.includes('adverse')) return 'adverse events';
+  if (title.includes('safety')) return 'safety concerns';
+  return 'compliance violations';
+}
+
+function extractTrialDetails(title, description) {
+  if (title.includes('failed') || title.includes('miss')) return 'missed primary endpoints';
+  if (title.includes('enrollment')) return 'enrollment challenges';
+  if (title.includes('hold') || title.includes('suspend')) return 'regulatory hold';
+  if (title.includes('delay')) return 'trial delays';
+  return 'clinical development setbacks';
+}
+
+function extractInvestmentDetails(title, description) {
+  if (title.includes('funding') || title.includes('capital')) return 'funding requirements';
+  if (title.includes('ipo')) return 'IPO considerations';
+  if (title.includes('cash')) return 'cash flow challenges';
+  if (title.includes('investment')) return 'investment opportunities';
+  return 'capital needs';
+}
+
+function extractRegulatoryDetails(title, description) {
+  if (title.includes('crl') || title.includes('complete response')) return 'Complete Response Letter';
+  if (title.includes('delay')) return 'regulatory approval delays';
+  if (title.includes('pdufa')) return 'PDUFA date extension';
+  if (title.includes('fda')) return 'FDA regulatory challenges';
+  return 'regulatory setbacks';
+}
+
+function extractTimeframe(title, description) {
+  const content = title + ' ' + description;
+  if (content.includes('immediate') || content.includes('urgent')) return 'immediate';
+  if (content.includes('this year') || content.includes('2024') || content.includes('2025')) return 'near-term';
+  if (content.includes('next year') || content.includes('2026')) return 'medium-term';
+  return 'ongoing';
+}
+
+function extractImpactDetails(title, description) {
+  const content = title + ' ' + description;
+  if (content.includes('million') || content.includes('significant') || content.includes('major')) return 'significant';
+  if (content.includes('minor') || content.includes('limited')) return 'limited';
+  return 'material';
+}
+
+function generateSubjectLine(trigger, storyDetails) {
+  const subjects = {
+    'warning-letter': `Strategic Support Following ${trigger.company}'s FDA Warning Letter`,
+    'patent-expiry': `Competitive Intelligence Solutions for ${trigger.company}'s Patent Considerations`,
+    'compliance-issue': `Regulatory Remediation Support for ${trigger.company}`,
+    'trial-difficulty': `Clinical Development Solutions for ${trigger.company}`,
+    'investment-need': `Due Diligence Intelligence for ${trigger.company}'s Growth Strategy`,
+    'regulatory-delay': `Regulatory Strategy Support for ${trigger.company}'s Submission`,
+    'orphan-drug': `Rare Disease Intelligence Solutions for ${trigger.company}`,
+    'merger-acquisition': `Transaction Intelligence Support for ${trigger.company}`
+  };
+  
+  return subjects[trigger.triggerType] || `Strategic Partnership Opportunity with ${trigger.company}`;
+}
+
+function generateEmailBody(trigger, storyDetails, valueProps) {
+  const date = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  return `Dear [Contact Name],
+
+I hope this message finds you well. I'm reaching out from ${SYNETICX_INFO.companyName}, a leading ${SYNETICX_INFO.tagline} that specializes in ${valueProps.expertise}.
+
+I noticed the recent development regarding ${trigger.company}'s ${storyDetails.issue || 'situation'} as reported in ${trigger.source}. Having worked extensively with pharmaceutical companies facing similar challenges, I understand the complexities and strategic considerations this presents for your organization.
+
+At ${SYNETICX_INFO.companyName}, we have a proven track record in addressing these exact challenges. Our ${valueProps.solution} has enabled pharmaceutical leaders to ${valueProps.benefit}. Specifically, we have ${valueProps.caseStudy}.
+
+Given ${trigger.company}'s current situation, we believe our expertise could provide significant value by:
+
+• Providing real-time intelligence and analytics to navigate the current challenge
+• Developing strategic roadmaps based on successful outcomes with similar companies
+• Offering regulatory and competitive insights to optimize decision-making
+• Supporting your team with proven methodologies and industry best practices
+
+I would welcome the opportunity to discuss how ${SYNETICX_INFO.companyName} can support ${trigger.company} during this critical period. Our approach is always confidential, collaborative, and focused on delivering measurable outcomes that align with your business objectives.
+
+Would you be available for a brief 15-minute conversation this week to explore how we might assist? I'm confident that our specialized expertise in ${valueProps.expertise} could provide valuable insights for your strategic planning.
+
+Thank you for your time and consideration. I look forward to the possibility of supporting ${trigger.company}'s continued success.
+
+Best regards,
+
+[Your Name]
+${SYNETICX_INFO.companyName} | ${SYNETICX_INFO.tagline}
+[Your Title] | [Your Phone] | [Your Email]
+${SYNETICX_INFO.website}
+
+---
+This communication is confidential and intended solely for the addressee. If you have received this message in error, please notify the sender immediately.`;
+}
+
+function regenerateEmail(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) return;
+  
+  // Add slight variation to regeneration
+  trigger._emailVariation = (trigger._emailVariation || 0) + 1;
+  
+  const newEmail = generatePersonalizedEmail(trigger);
+  const contentElement = document.getElementById(`emailContent-${triggerId}`);
+  if (contentElement) {
+    contentElement.textContent = newEmail;
+    // Add flash effect
+    contentElement.parentElement.style.animation = 'flash 0.5s ease-in-out';
+    setTimeout(() => {
+      contentElement.parentElement.style.animation = '';
+    }, 500);
+  }
+}
+
+function copyEmailContent(triggerId) {
+  const contentElement = document.getElementById(`emailContent-${triggerId}`);
+  if (contentElement) {
+    const emailText = contentElement.textContent;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(emailText).then(() => {
+      // Show success feedback
+      const button = event.target;
+      const originalText = button.innerHTML;
+      button.innerHTML = '✅ Copied!';
+      button.classList.add('copy-success');
+      
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('copy-success');
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy email:', err);
+      alert('Failed to copy email. Please select and copy manually.');
+    });
+  }
 }
 
 // Auto-refresh every 30 minutes

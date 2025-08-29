@@ -340,13 +340,19 @@ class LeadProcessor {
   generateCSV() {
     const headers = [
       'Date', 'Priority', 'Company', 'Trigger Type', 'Title', 'Description', 
-      'Outreach Strategy', 'Contact Role', 'Contact Email', 'Contact Priority', 
-      'Source', 'URL', 'Score'
+      'Outreach Strategy', 'Contact Role', 'Contact Email', 'Contact Priority',
+      'Email Subject', 'Generated Email Copy', 'Source', 'URL', 'Score'
     ];
 
     const rows = [headers.join(',')];
 
     for (const trigger of this.triggers) {
+      // Generate email for this trigger
+      const emailContent = this.generatePersonalizedEmail(trigger);
+      const emailLines = emailContent.split('\n');
+      const subject = emailLines[0].replace('Subject: ', '');
+      const emailBody = emailLines.slice(2).join('\n');
+      
       for (const contact of trigger.contacts) {
         rows.push([
           `"${new Date(trigger.date).toLocaleDateString()}"`,
@@ -359,6 +365,8 @@ class LeadProcessor {
           `"${contact.role}"`,
           `"${contact.email}"`,
           `"${contact.priority}"`,
+          `"${subject.replace(/"/g, '""')}"`,
+          `"${emailBody.replace(/"/g, '""')}"`,
           `"${trigger.source}"`,
           `"${trigger.link}"`,
           `"${trigger.score}"`
@@ -367,6 +375,140 @@ class LeadProcessor {
     }
 
     return rows.join('\n');
+  }
+
+  generatePersonalizedEmail(trigger) {
+    // SyneticX company information and value propositions
+    const SYNETICX_INFO = {
+      companyName: 'SyneticX',
+      tagline: 'Medical Intelligence Consultancy',
+      website: 'www.syneticx.com',
+      valueProps: {
+        'warning-letter': {
+          expertise: 'regulatory compliance optimization',
+          solution: 'AI-powered compliance monitoring and predictive analytics',
+          benefit: 'prevent future regulatory issues and accelerate approvals',
+          caseStudy: 'helped 15+ pharmaceutical companies achieve zero 483 observations over 2 years'
+        },
+        'patent-expiry': {
+          expertise: 'competitive intelligence and market access strategy',
+          solution: 'comprehensive patent landscape analysis and generic entry predictions',
+          benefit: 'maximize exclusivity periods and prepare for competitive threats',
+          caseStudy: 'generated $300M+ in preserved revenue through strategic patent cliff management'
+        },
+        'compliance-issue': {
+          expertise: 'quality management and regulatory remediation',
+          solution: 'real-time quality intelligence and remediation roadmaps',
+          benefit: 'resolve compliance issues faster and prevent recurring problems',
+          caseStudy: 'reduced average remediation time by 60% for Fortune 500 pharma clients'
+        },
+        'trial-difficulty': {
+          expertise: 'clinical development optimization',
+          solution: 'predictive trial analytics and regulatory strategy consulting',
+          benefit: 'improve trial success rates and accelerate time-to-market',
+          caseStudy: 'increased Phase II success rates by 40% through data-driven protocol optimization'
+        },
+        'investment-need': {
+          expertise: 'pharmaceutical valuation and due diligence',
+          solution: 'comprehensive market intelligence and competitive analysis',
+          benefit: 'support funding rounds with robust data and market insights',
+          caseStudy: 'supported $2B+ in pharmaceutical transactions with critical market intelligence'
+        },
+        'regulatory-delay': {
+          expertise: 'regulatory strategy and submission optimization',
+          solution: 'FDA interaction intelligence and submission enhancement services',
+          benefit: 'navigate regulatory challenges and accelerate approval timelines',
+          caseStudy: 'reduced average CRL resolution time by 8 months for biotech clients'
+        }
+      }
+    };
+
+    const valueProps = SYNETICX_INFO.valueProps[trigger.triggerType] || SYNETICX_INFO.valueProps['compliance-issue'];
+    const storyDetails = this.extractStoryDetails(trigger);
+    
+    const subject = `Strategic Support Following ${trigger.company}'s ${this.getTriggerLabel(trigger.triggerType)}`;
+    
+    const emailBody = `Dear [Contact Name],
+
+I hope this message finds you well. I'm reaching out from ${SYNETICX_INFO.companyName}, a leading ${SYNETICX_INFO.tagline} that specializes in ${valueProps.expertise}.
+
+I noticed the recent development regarding ${trigger.company}'s ${storyDetails.issue || 'situation'} as reported in ${trigger.source}. Having worked extensively with pharmaceutical companies facing similar challenges, I understand the complexities and strategic considerations this presents for your organization.
+
+At ${SYNETICX_INFO.companyName}, we have a proven track record in addressing these exact challenges. Our ${valueProps.solution} has enabled pharmaceutical leaders to ${valueProps.benefit}. Specifically, we have ${valueProps.caseStudy}.
+
+Given ${trigger.company}'s current situation, we believe our expertise could provide significant value by:
+
+• Providing real-time intelligence and analytics to navigate the current challenge
+• Developing strategic roadmaps based on successful outcomes with similar companies
+• Offering regulatory and competitive insights to optimize decision-making
+• Supporting your team with proven methodologies and industry best practices
+
+I would welcome the opportunity to discuss how ${SYNETICX_INFO.companyName} can support ${trigger.company} during this critical period. Our approach is always confidential, collaborative, and focused on delivering measurable outcomes that align with your business objectives.
+
+Would you be available for a brief 15-minute conversation this week to explore how we might assist? I'm confident that our specialized expertise in ${valueProps.expertise} could provide valuable insights for your strategic planning.
+
+Thank you for your time and consideration. I look forward to the possibility of supporting ${trigger.company}'s continued success.
+
+Best regards,
+
+[Your Name]
+${SYNETICX_INFO.companyName} | ${SYNETICX_INFO.tagline}
+[Your Title] | [Your Phone] | [Your Email]
+${SYNETICX_INFO.website}
+
+---
+This communication is confidential and intended solely for the addressee. If you have received this message in error, please notify the sender immediately.`;
+
+    return `Subject: ${subject}\n\n${emailBody}`;
+  }
+
+  extractStoryDetails(trigger) {
+    const title = trigger.title.toLowerCase();
+    const description = trigger.description.toLowerCase();
+    
+    let issue = '';
+    
+    // Extract specific issue details based on trigger type
+    switch (trigger.triggerType) {
+      case 'warning-letter':
+        if (title.includes('manufacturing')) issue = 'manufacturing violations';
+        else if (title.includes('clinical')) issue = 'clinical trial deficiencies';
+        else if (title.includes('quality')) issue = 'quality control issues';
+        else if (title.includes('data')) issue = 'data integrity concerns';
+        else issue = 'regulatory compliance deficiencies';
+        break;
+      case 'patent-expiry':
+        if (title.includes('expir')) issue = 'patent expiration';
+        else if (title.includes('challenge')) issue = 'patent challenge';
+        else issue = 'intellectual property concerns';
+        break;
+      case 'compliance-issue':
+        if (title.includes('recall')) issue = 'product recall';
+        else if (title.includes('contamina')) issue = 'contamination issues';
+        else issue = 'compliance violations';
+        break;
+      case 'trial-difficulty':
+        if (title.includes('failed')) issue = 'missed primary endpoints';
+        else if (title.includes('enrollment')) issue = 'enrollment challenges';
+        else issue = 'clinical development setbacks';
+        break;
+      default:
+        issue = 'situation';
+    }
+    
+    return { issue };
+  }
+
+  getTriggerLabel(triggerType) {
+    const labels = {
+      'warning-letter': 'FDA Warning Letter',
+      'patent-expiry': 'Patent Concerns',
+      'compliance-issue': 'Compliance Issue',
+      'trial-difficulty': 'Clinical Trial Challenge',
+      'investment-need': 'Investment Opportunity',
+      'regulatory-delay': 'Regulatory Delay'
+    };
+    return labels[triggerType] || triggerType;
   }
 
   async cleanup() {
