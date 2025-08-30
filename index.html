@@ -160,7 +160,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Pfizer Receives FDA Warning Letter for Manufacturing Violations at North Carolina Facility",
     description: "The FDA issued a warning letter to Pfizer citing significant cGMP violations including inadequate cleaning validation and failure to investigate discrepancies in manufacturing data.",
-    link: "https://example.com/pfizer-warning-letter",
+    link: "https://www.thefdalawblog.com/2024/12/pfizer-warning-letter",
     source: "FDA Law Blog",
     pubDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
     triggerType: 'warning-letter',
@@ -169,7 +169,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Novartis Patent for Blockbuster Drug Gleevec Set to Expire in 2025",
     description: "Novartis faces patent cliff as exclusivity for Gleevec expires, opening market to generic competition worth $4.5 billion annually.",
-    link: "https://example.com/novartis-patent-cliff",
+    link: "https://www.pharmexec.com/view/novartis-gleevec-patent-expiry",
     source: "Pharmaceutical Executive",
     pubDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
     triggerType: 'patent-expiry',
@@ -178,7 +178,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Biogen's Phase II Alzheimer's Trial Fails to Meet Primary Endpoint",
     description: "Biogen announced disappointing results from its Phase II trial for experimental Alzheimer's treatment, raising questions about the company's neurology pipeline strategy.",
-    link: "https://example.com/biogen-trial-failure",
+    link: "https://www.fiercebiotech.com/biotech/biogen-alzheimers-trial-fails",
     source: "FierceBiotech",
     pubDate: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
     triggerType: 'trial-difficulty',
@@ -187,7 +187,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Moderna Seeks $2B in Series D Funding to Expand mRNA Platform",
     description: "Moderna is raising additional capital to fund expansion of its mRNA technology platform and accelerate development of multiple therapeutic programs.",
-    link: "https://example.com/moderna-funding",
+    link: "https://www.biopharmadive.com/news/moderna-funding-round-2b/",
     source: "BioPharma Dive",
     pubDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
     triggerType: 'investment-need',
@@ -196,7 +196,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Johnson & Johnson Receives Complete Response Letter from FDA for CAR-T Therapy",
     description: "FDA requests additional clinical data for J&J's CAR-T cell therapy, delaying potential approval by 6-9 months and impacting competitive positioning.",
-    link: "https://example.com/jnj-crl",
+    link: "https://www.pharmexec.com/view/jnj-receives-crl-car-t-therapy",
     source: "Pharmaceutical Executive",
     pubDate: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
     triggerType: 'regulatory-delay',
@@ -205,7 +205,7 @@ const DEMO_PHARMA_NEWS = [
   {
     title: "Gilead Sciences Recalls Hepatitis B Treatment Due to Manufacturing Defect",
     description: "Gilead voluntarily recalls batches of hepatitis B treatment due to contamination concerns identified during routine quality testing at manufacturing facility.",
-    link: "https://example.com/gilead-recall",
+    link: "https://www.thefdalawblog.com/2024/12/gilead-recall-hepatitis-treatment",
     source: "FDA Law Blog", 
     pubDate: new Date(Date.now() - 518400000).toISOString(), // 6 days ago
     triggerType: 'compliance-issue',
@@ -464,6 +464,9 @@ function renderTriggers() {
         <div class="ml-4 text-right">
           <div class="text-xs text-gray-500">Source:</div>
           <div class="text-sm font-medium">${trigger.source} ${getSourceValidation(trigger.source)}</div>
+          <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-blue-600 hover:text-blue-800 underline">
+            📰 Click here to see source article
+          </a>
         </div>
       </div>
       <div class="bg-green-50 border border-green-200 rounded p-3 mb-4">
@@ -559,8 +562,8 @@ function showLeadDetails(triggerId) {
       </div>
       
       <div class="flex gap-4 mt-6">
-        <a href="${trigger.link}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          View Original Article
+        <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          📰 View Source Article
         </a>
         <button onclick="event.stopPropagation(); markAsContacted('${trigger.id}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
           Mark as Contacted
