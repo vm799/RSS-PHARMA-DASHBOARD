@@ -378,6 +378,12 @@ function analyzeTrigger(item, source) {
   let priority = item.priority || 'medium'; // Use pre-set priority for demo data
   let company = extractCompanyName(item.title);
   
+  // If no valid company found, skip this trigger
+  if (!company) {
+    console.log(`Skipping trigger - no valid company found: ${item.title}`);
+    return null;
+  }
+  
   // If triggerType not pre-set, analyze for trigger keywords
   if (!triggerType) {
     for (const [type, keywords] of Object.entries(triggerKeywords)) {
@@ -388,7 +394,10 @@ function analyzeTrigger(item, source) {
     }
   }
   
-  if (!triggerType) return null;
+  if (!triggerType) {
+    console.log(`Skipping trigger - no trigger type identified: ${item.title}`);
+    return null;
+  }
   
   // If priority not pre-set, determine priority based on content
   if (!item.priority) {
@@ -415,24 +424,137 @@ function analyzeTrigger(item, source) {
 }
 
 function extractCompanyName(title) {
-  // Simple company name extraction - can be enhanced with more sophisticated NLP
-  const commonPharmaCompanies = [
-    'Pfizer', 'Johnson & Johnson', 'Roche', 'Novartis', 'Merck', 'AbbVie', 'Sanofi',
-    'GlaxoSmithKline', 'Gilead', 'Amgen', 'Bristol Myers Squibb', 'AstraZeneca',
-    'Eli Lilly', 'Biogen', 'Regeneron', 'Vertex', 'Moderna', 'BioNTech'
+  // Known pharmaceutical companies (high confidence matches)
+  const knownPharmaCompanies = [
+    'Pfizer', 'Johnson & Johnson', 'J&J', 'Roche', 'Novartis', 'Merck', 'AbbVie', 'Sanofi',
+    'GlaxoSmithKline', 'GSK', 'Gilead Sciences', 'Gilead', 'Amgen', 'Bristol Myers Squibb', 'BMS',
+    'AstraZeneca', 'Eli Lilly', 'Lilly', 'Biogen', 'Regeneron', 'Vertex', 'Moderna', 'BioNTech',
+    'Teva', 'Takeda', 'Bayer', 'Boehringer Ingelheim', 'Allergan', 'Celgene', 'Genentech',
+    'Amylin', 'Alexion', 'Incyte', 'Illumina', 'Alnylam', 'Sarepta', 'Bluebird Bio',
+    'CRISPR Therapeutics', 'Editas Medicine', 'Exact Sciences', 'Guardant Health'
   ];
   
-  for (const company of commonPharmaCompanies) {
-    if (title.toLowerCase().includes(company.toLowerCase())) {
+  // First check for known pharmaceutical companies
+  for (const company of knownPharmaCompanies) {
+    const regex = new RegExp(`\\b${company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(title)) {
       return company;
     }
   }
   
-  // Try to extract company names from title patterns
-  const companyPattern = /([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)*(?:,? Inc\.?|,? Corp\.?|,? Ltd\.?|,? Pharmaceuticals?|,? Biotech)?)/g;
-  const matches = title.match(companyPattern);
+  // Terms that are NOT company names (exclusion list)
+  const excludedTerms = [
+    'FDA', 'NIH', 'CDC', 'EMA', 'Health Canada', 'TGA', 'PMDA',
+    'Clinical Trials', 'Phase I', 'Phase II', 'Phase III', 'Phase 2', 'Phase 3',
+    'Warning Letter', 'Patent Expiry', 'Generic Competition', 'Biosimilar',
+    'Regulatory Delay', 'Compliance Issue', 'Manufacturing Violation',
+    'Drug Recall', 'Safety Issue', 'Adverse Event', 'Side Effect',
+    'Market Access', 'Pricing Pressure', 'Reimbursement',
+    'Investment Round', 'Funding', 'IPO', 'Merger', 'Acquisition',
+    'Clinical Trial', 'Study Results', 'Efficacy Data', 'Safety Data',
+    'Orphan Drug', 'Rare Disease', 'Breakthrough Therapy',
+    'Fast Track', 'Priority Review', 'Accelerated Approval',
+    'New Drug Application', 'NDA', 'BLA', 'ANDA',
+    'Good Manufacturing Practice', 'GMP', 'Quality Control',
+    'Pharmaceutical Industry', 'Biotech Sector', 'Drug Development',
+    'Mislabeling', 'Labeling Error', 'Documentation Issue'
+  ];
   
-  return matches ? matches[0] : 'Unknown Company';
+  // Advanced company name extraction with validation
+  const potentialCompanies = [];
+  
+  // Pattern 1: Company + explicit pharmaceutical terms
+  const pharmaPattern = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\s+(?:Pharmaceuticals?|Biotech|Biopharmaceuticals?|Inc\.?|Corp\.?|Ltd\.?|AG|SE|SA|NV|plc)/gi;
+  let matches = title.match(pharmaPattern);
+  if (matches) {
+    matches.forEach(match => {
+      const companyName = match.replace(/\s+(?:Pharmaceuticals?|Biotech|Biopharmaceuticals?|Inc\.?|Corp\.?|Ltd\.?|AG|SE|SA|NV|plc)$/i, '').trim();
+      if (!isExcludedTerm(companyName, excludedTerms)) {
+        potentialCompanies.push(match.trim());
+      }
+    });
+  }
+  
+  // Pattern 2: Possessive form ("Company's drug", "Company's trial")
+  const possessivePattern = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)'s\s+(?:drug|treatment|therapy|medication|vaccine|trial|study)/gi;
+  matches = title.match(possessivePattern);
+  if (matches) {
+    matches.forEach(match => {
+      const companyName = match.replace(/'s\s+.*/i, '').trim();
+      if (!isExcludedTerm(companyName, excludedTerms) && isLikelyCompany(companyName)) {
+        potentialCompanies.push(companyName);
+      }
+    });
+  }
+  
+  // Pattern 3: "Company receives", "Company announces", etc.
+  const actionPattern = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\s+(?:receives?|announces?|reports?|faces?|seeks?|gets?|obtains?)/gi;
+  matches = title.match(actionPattern);
+  if (matches) {
+    matches.forEach(match => {
+      const companyName = match.replace(/\s+(?:receives?|announces?|reports?|faces?|seeks?|gets?|obtains?)$/i, '').trim();
+      if (!isExcludedTerm(companyName, excludedTerms) && isLikelyCompany(companyName)) {
+        potentialCompanies.push(companyName);
+      }
+    });
+  }
+  
+  // Return the most likely company name or null if none found
+  if (potentialCompanies.length > 0) {
+    // Prefer longer names (more specific) and known pharmaceutical terms
+    return potentialCompanies.sort((a, b) => {
+      const aScore = getCompanyScore(a);
+      const bScore = getCompanyScore(b);
+      return bScore - aScore;
+    })[0];
+  }
+  
+  return null; // Return null instead of 'Unknown Company'
+}
+
+// Helper function to check if a term should be excluded
+function isExcludedTerm(term, excludedTerms) {
+  return excludedTerms.some(excluded => 
+    term.toLowerCase().includes(excluded.toLowerCase()) ||
+    excluded.toLowerCase().includes(term.toLowerCase())
+  );
+}
+
+// Helper function to determine if a name is likely a company
+function isLikelyCompany(name) {
+  // Must be at least 2 characters
+  if (name.length < 2) return false;
+  
+  // Should not be common English words
+  const commonWords = ['The', 'And', 'For', 'With', 'From', 'This', 'That', 'Will', 'Can', 'May', 'New', 'First', 'Last', 'Next', 'Other', 'Some', 'All', 'Many', 'Most', 'More', 'Less', 'Same', 'Such', 'Each', 'Every', 'Both', 'Few', 'Several', 'Another', 'Different', 'Various', 'Certain', 'Particular', 'Specific'];
+  if (commonWords.includes(name)) return false;
+  
+  // Should not be pharmaceutical terminology
+  const pharmaTerms = ['Drug', 'Drugs', 'Medicine', 'Medication', 'Treatment', 'Therapy', 'Trial', 'Study', 'Research', 'Development', 'Approval', 'Regulatory', 'Clinical', 'Patient', 'Patients', 'Disease', 'Condition', 'Symptoms', 'Safety', 'Efficacy'];
+  if (pharmaTerms.includes(name)) return false;
+  
+  return true;
+}
+
+// Helper function to score company names (higher score = more likely to be correct)
+function getCompanyScore(name) {
+  let score = name.length; // Longer names generally more specific
+  
+  // Bonus for pharmaceutical indicators
+  if (/(?:pharma|bio|tech|therapeutics|sciences?|medical|health)$/i.test(name)) {
+    score += 20;
+  }
+  
+  // Bonus for corporate suffixes
+  if (/(?:inc|corp|ltd|llc|ag|se|sa|nv|plc)$/i.test(name)) {
+    score += 15;
+  }
+  
+  // Bonus for multiple words (more likely to be company name)
+  const wordCount = name.split(/\s+/).length;
+  if (wordCount > 1) score += wordCount * 5;
+  
+  return score;
 }
 
 function generateActionableInsights(triggerType, company, title) {
@@ -553,11 +675,56 @@ function validateCompanyLink(url, fallbackCallback) {
 }
 
 function generatePotentialContacts(company) {
+  // Validate that company is a real company name
+  if (!company || company.length < 2) {
+    return [];
+  }
+  
+  // Common pharmaceutical executive names for more realistic contact generation
+  const executiveNames = {
+    'Chief Medical Officer': ['Dr. Sarah Chen', 'Dr. Michael Rodriguez', 'Dr. Jennifer Park', 'Dr. David Kumar', 'Dr. Lisa Thompson'],
+    'VP Regulatory Affairs': ['Maria Gonzalez', 'Robert Johnson', 'Catherine Lee', 'James Wilson', 'Amanda Foster'],
+    'Head of Clinical Development': ['Dr. Thomas Anderson', 'Dr. Rachel Kim', 'Dr. Steven Martinez', 'Dr. Emily Wright', 'Dr. Mark Davis'],
+    'Director of Market Access': ['Jessica Taylor', 'Andrew Miller', 'Lauren Smith', 'Kevin Brown', 'Nicole Johnson']
+  };
+  
+  // Create a clean domain name from company name
+  const cleanCompany = company
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
+    .replace(/\s+/g, '') // Remove spaces
+    .replace(/(?:inc|corp|ltd|llc|pharmaceuticals?|biotech|sciences?|medical|health|ag|se|sa|nv|plc)$/i, '') // Remove corporate suffixes
+    .substring(0, 20); // Limit length
+  
+  // Don't generate contacts for obviously invalid company names
+  if (cleanCompany.length < 3 || /^(the|and|for|with|from)/.test(cleanCompany)) {
+    console.log(`Skipping contact generation for invalid company: ${company}`);
+    return [];
+  }
+  
+  const companyDomain = cleanCompany + '.com';
+  
   return [
-    { role: 'Chief Medical Officer', email: `cmo@${company.toLowerCase().replace(/\s+/g, '')}.com` },
-    { role: 'VP Regulatory Affairs', email: `regulatory@${company.toLowerCase().replace(/\s+/g, '')}.com` },
-    { role: 'Head of Clinical Development', email: `clinical@${company.toLowerCase().replace(/\s+/g, '')}.com` },
-    { role: 'Director of Market Access', email: `marketaccess@${company.toLowerCase().replace(/\s+/g, '')}.com` }
+    { 
+      name: executiveNames['Chief Medical Officer'][Math.floor(Math.random() * 5)],
+      role: 'Chief Medical Officer', 
+      email: `cmo@${companyDomain}` 
+    },
+    { 
+      name: executiveNames['VP Regulatory Affairs'][Math.floor(Math.random() * 5)],
+      role: 'VP Regulatory Affairs', 
+      email: `regulatory@${companyDomain}` 
+    },
+    { 
+      name: executiveNames['Head of Clinical Development'][Math.floor(Math.random() * 5)],
+      role: 'Head of Clinical Development', 
+      email: `clinical@${companyDomain}` 
+    },
+    { 
+      name: executiveNames['Director of Market Access'][Math.floor(Math.random() * 5)],
+      role: 'Director of Market Access', 
+      email: `marketaccess@${companyDomain}` 
+    }
   ];
 }
 
