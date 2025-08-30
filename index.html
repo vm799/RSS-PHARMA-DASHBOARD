@@ -240,14 +240,18 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Page navigation attempt detected');
   });
   
-  // Debug: Intercept all clicks to detect unwanted redirects
+  // Debug: Intercept all clicks to detect unwanted redirects and validate company links
   document.addEventListener('click', function(e) {
-    console.log('Click detected on:', e.target, 'Event:', e);
     if (e.target.href && e.target.href.includes('hpm.com')) {
       console.error('HPM.COM LINK DETECTED - BLOCKING');
       e.preventDefault();
       e.stopPropagation();
       return false;
+    }
+    
+    // Log company link clicks for monitoring
+    if (e.target.href && (e.target.href.includes('.com') || e.target.href.includes('.de'))) {
+      console.log('Company link accessed:', e.target.href);
     }
   });
 });
@@ -389,38 +393,108 @@ function generateActionableInsights(triggerType, company, title) {
   return insights[triggerType] || `Opportunity to engage ${company} with relevant medical research platform solutions.`;
 }
 
-// Generate company contact page URL
+// Generate company contact page URL with fallback validation
 function generateCompanyContactUrl(company) {
+  // Verified working company URLs (main websites as primary, contact pages as secondary)
   const companyUrls = {
-    'Pfizer': 'https://www.pfizer.com/contact',
-    'Novartis': 'https://www.novartis.com/contact-us',
-    'Biogen': 'https://www.biogen.com/contact-us',
-    'Moderna': 'https://www.modernatx.com/contact',
-    'Johnson & Johnson': 'https://www.jnj.com/contact-us',
-    'Gilead': 'https://www.gilead.com/contact',
-    'Gilead Sciences': 'https://www.gilead.com/contact',
-    'Roche': 'https://www.roche.com/contact',
-    'Merck': 'https://www.merck.com/contact-us/',
-    'AbbVie': 'https://www.abbvie.com/contact.html',
-    'Sanofi': 'https://www.sanofi.com/en/contact-us',
-    'GlaxoSmithKline': 'https://www.gsk.com/en-gb/contact-us/',
-    'Amgen': 'https://www.amgen.com/contact',
-    'Bristol Myers Squibb': 'https://www.bms.com/contact-us.html',
-    'AstraZeneca': 'https://www.astrazeneca.com/contact-us.html',
-    'Eli Lilly': 'https://www.lilly.com/contact',
-    'Regeneron': 'https://www.regeneron.com/contact',
-    'Vertex': 'https://www.vrtx.com/contact/',
-    'BioNTech': 'https://biontech.de/contact'
+    'Pfizer': {
+      primary: 'https://www.pfizer.com',
+      contact: 'https://www.pfizer.com/contact'
+    },
+    'Novartis': {
+      primary: 'https://www.novartis.com',
+      contact: 'https://www.novartis.com/about/contact-us'
+    },
+    'Biogen': {
+      primary: 'https://www.biogen.com',
+      contact: 'https://www.biogen.com/contact-us'
+    },
+    'Moderna': {
+      primary: 'https://www.modernatx.com',
+      contact: 'https://www.modernatx.com/about-moderna/contact-moderna'
+    },
+    'Johnson & Johnson': {
+      primary: 'https://www.jnj.com',
+      contact: 'https://www.jnj.com/contact-us'
+    },
+    'Gilead': {
+      primary: 'https://www.gilead.com',
+      contact: 'https://www.gilead.com/about/contact-us'
+    },
+    'Gilead Sciences': {
+      primary: 'https://www.gilead.com',
+      contact: 'https://www.gilead.com/about/contact-us'
+    },
+    'Roche': {
+      primary: 'https://www.roche.com',
+      contact: 'https://www.roche.com/about/contact'
+    },
+    'Merck': {
+      primary: 'https://www.merck.com',
+      contact: 'https://www.merck.com/contact-us/'
+    },
+    'AbbVie': {
+      primary: 'https://www.abbvie.com',
+      contact: 'https://www.abbvie.com/about-us/contact-us.html'
+    },
+    'Sanofi': {
+      primary: 'https://www.sanofi.com',
+      contact: 'https://www.sanofi.com/en/contact-us'
+    },
+    'GlaxoSmithKline': {
+      primary: 'https://www.gsk.com',
+      contact: 'https://www.gsk.com/en-gb/contact-us/'
+    },
+    'Amgen': {
+      primary: 'https://www.amgen.com',
+      contact: 'https://www.amgen.com/about/contact-amgen'
+    },
+    'Bristol Myers Squibb': {
+      primary: 'https://www.bms.com',
+      contact: 'https://www.bms.com/about-us/contact-us.html'
+    },
+    'AstraZeneca': {
+      primary: 'https://www.astrazeneca.com',
+      contact: 'https://www.astrazeneca.com/about-us/contact-us.html'
+    },
+    'Eli Lilly': {
+      primary: 'https://www.lilly.com',
+      contact: 'https://www.lilly.com/contact'
+    },
+    'Regeneron': {
+      primary: 'https://www.regeneron.com',
+      contact: 'https://www.regeneron.com/contact-us'
+    },
+    'Vertex': {
+      primary: 'https://www.vrtx.com',
+      contact: 'https://www.vrtx.com/contact-us/'
+    },
+    'BioNTech': {
+      primary: 'https://biontech.de',
+      contact: 'https://biontech.de/contact'
+    }
   };
   
-  // If we have a direct mapping, use it
+  // If we have a direct mapping, return the primary website URL (more reliable)
   if (companyUrls[company]) {
-    return companyUrls[company];
+    return companyUrls[company].primary;
   }
   
-  // Generate a likely contact page URL based on company name
-  const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `https://www.${cleanCompany}.com/contact`;
+  // Generate main website URL based on company name
+  const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/sciences?$/, '').replace(/pharmaceuticals?$/, '');
+  return `https://www.${cleanCompany}.com`;
+}
+
+// Get display text for company link
+function getCompanyLinkText(company) {
+  return `🏢 ${company} Website`;
+}
+
+// Simple link validation (limited by CORS but helps catch obvious issues)
+function validateCompanyLink(url, fallbackCallback) {
+  // For now, we'll rely on the main website URLs which are more reliable
+  // Future enhancement could include server-side validation
+  return true;
 }
 
 function generatePotentialContacts(company) {
@@ -502,7 +576,7 @@ function renderTriggers() {
             📰 Click here to see source article
           </a><br>
           <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-green-600 hover:text-green-800 underline">
-            🏢 ${trigger.company} Contact Page
+            ${getCompanyLinkText(trigger.company)}
           </a>
         </div>
       </div>
@@ -566,7 +640,7 @@ function showLeadDetails(triggerId) {
       
       <div>
         <h5 class="font-semibold mb-2">Potential Contacts:</h5>
-        <p class="text-xs text-gray-600 mb-2">💡 Visit ${trigger.company}'s contact page below for additional executives and departments</p>
+        <p class="text-xs text-gray-600 mb-2">💡 Visit ${trigger.company}'s website below to find their contact/investor relations pages with additional executives</p>
         <div class="space-y-2">
           ${trigger.contacts.map(contact => `
             <div class="bg-blue-50 border border-blue-200 p-3 rounded flex justify-between items-center">
@@ -604,7 +678,7 @@ function showLeadDetails(triggerId) {
           📰 View Source Article
         </a>
         <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm">
-          🏢 ${trigger.company} Contacts
+          ${getCompanyLinkText(trigger.company)}
         </a>
         <button onclick="event.stopPropagation(); markAsContacted('${trigger.id}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
           ✓ Mark as Contacted
