@@ -389,6 +389,40 @@ function generateActionableInsights(triggerType, company, title) {
   return insights[triggerType] || `Opportunity to engage ${company} with relevant medical research platform solutions.`;
 }
 
+// Generate company contact page URL
+function generateCompanyContactUrl(company) {
+  const companyUrls = {
+    'Pfizer': 'https://www.pfizer.com/contact',
+    'Novartis': 'https://www.novartis.com/contact-us',
+    'Biogen': 'https://www.biogen.com/contact-us',
+    'Moderna': 'https://www.modernatx.com/contact',
+    'Johnson & Johnson': 'https://www.jnj.com/contact-us',
+    'Gilead': 'https://www.gilead.com/contact',
+    'Gilead Sciences': 'https://www.gilead.com/contact',
+    'Roche': 'https://www.roche.com/contact',
+    'Merck': 'https://www.merck.com/contact-us/',
+    'AbbVie': 'https://www.abbvie.com/contact.html',
+    'Sanofi': 'https://www.sanofi.com/en/contact-us',
+    'GlaxoSmithKline': 'https://www.gsk.com/en-gb/contact-us/',
+    'Amgen': 'https://www.amgen.com/contact',
+    'Bristol Myers Squibb': 'https://www.bms.com/contact-us.html',
+    'AstraZeneca': 'https://www.astrazeneca.com/contact-us.html',
+    'Eli Lilly': 'https://www.lilly.com/contact',
+    'Regeneron': 'https://www.regeneron.com/contact',
+    'Vertex': 'https://www.vrtx.com/contact/',
+    'BioNTech': 'https://biontech.de/contact'
+  };
+  
+  // If we have a direct mapping, use it
+  if (companyUrls[company]) {
+    return companyUrls[company];
+  }
+  
+  // Generate a likely contact page URL based on company name
+  const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `https://www.${cleanCompany}.com/contact`;
+}
+
 function generatePotentialContacts(company) {
   return [
     { role: 'Chief Medical Officer', email: `cmo@${company.toLowerCase().replace(/\s+/g, '')}.com` },
@@ -466,6 +500,9 @@ function renderTriggers() {
           <div class="text-sm font-medium">${trigger.source} ${getSourceValidation(trigger.source)}</div>
           <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-blue-600 hover:text-blue-800 underline">
             📰 Click here to see source article
+          </a><br>
+          <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-green-600 hover:text-green-800 underline">
+            🏢 ${trigger.company} Contact Page
           </a>
         </div>
       </div>
@@ -529,6 +566,7 @@ function showLeadDetails(triggerId) {
       
       <div>
         <h5 class="font-semibold mb-2">Potential Contacts:</h5>
+        <p class="text-xs text-gray-600 mb-2">💡 Visit ${trigger.company}'s contact page below for additional executives and departments</p>
         <div class="space-y-2">
           ${trigger.contacts.map(contact => `
             <div class="bg-blue-50 border border-blue-200 p-3 rounded flex justify-between items-center">
@@ -561,12 +599,15 @@ function showLeadDetails(triggerId) {
         </div>
       </div>
       
-      <div class="flex gap-4 mt-6">
-        <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      <div class="flex gap-3 mt-6 flex-wrap">
+        <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
           📰 View Source Article
         </a>
-        <button onclick="event.stopPropagation(); markAsContacted('${trigger.id}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          Mark as Contacted
+        <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm">
+          🏢 ${trigger.company} Contacts
+        </a>
+        <button onclick="event.stopPropagation(); markAsContacted('${trigger.id}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+          ✓ Mark as Contacted
         </button>
       </div>
     </div>
