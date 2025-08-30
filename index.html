@@ -170,10 +170,30 @@
 <script>
 // Enhanced RSS feeds targeting regulatory and business triggers (with working feeds + demo data)
 const rssFeeds = {
+  // Core FDA and Regulatory Feeds
   "FDA Law Blog": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thefdalawblog.com/feed",
+  "FDA News": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds-fda-news-information",
+  
+  // Industry News and Analysis
   "Pharmaceutical Executive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmexec.com/rss",
-  "BioPharma Dive": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/biopharmadive",
-  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/fiercebiotech"
+  "BioPharma Dive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.biopharmadive.com/feeds/news/",
+  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/fiercebiotech",
+  "FiercePharma": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/fiercepharma",
+  "Endpoints News": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/EndpointsNews",
+  
+  // Clinical Trials and R&D
+  "ClinicalTrials.gov": "https://api.rss2json.com/v1/api.json?rss_url=https://clinicaltrials.gov/ct2/results/rss.xml?lup_d=14",
+  "Nature Biotechnology": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.nature.com/nbt/rss/current",
+  
+  // Business and Investment
+  "BioWorld": "https://api.rss2json.com/v1/api.json?rss_url=https://www.bioworld.com/rss/bioworld-news.xml",
+  "PharmaLetter": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thepharmaletter.com/rss",
+  "Scrip Intelligence": "https://api.rss2json.com/v1/api.json?rss_url=https://scrip.pharmaintelligence.informa.com/rss/news",
+  
+  // Regulatory Compliance
+  "Regulatory Affairs Professionals": "https://api.rss2json.com/v1/api.json?rss_url=https://www.raps.org/news-and-articles/rss",
+  "PharmTech": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmtech.com/rss",
+  "Pharmaphorum": "https://api.rss2json.com/v1/api.json?rss_url=https://pharmaphorum.com/rssfeed"
 };
 
 // Demo pharmaceutical news data for immediate testing
@@ -298,26 +318,36 @@ async function refreshData() {
       }
     });
     
-    // Then try to fetch live RSS feeds
-    const feedPromises = Object.entries(rssFeeds).map(async ([feedName, feedUrl]) => {
-      try {
-        const response = await fetch(feedUrl);
-        const data = await response.json();
-        
-        if (data.status === 'ok' && data.items) {
-          data.items.slice(0, 5).forEach(item => { // Limit to 5 items per feed
-            const trigger = analyzeTrigger(item, feedName);
-            if (trigger) {
-              allTriggers.push(trigger);
-            }
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching ${feedName}:`, error);
-      }
-    });
+    // Then try to fetch live RSS feeds (limit concurrent requests for better performance)
+    const feedEntries = Object.entries(rssFeeds);
+    const batchSize = 5; // Process 5 feeds at a time to avoid rate limiting
     
-    await Promise.all(feedPromises);
+    for (let i = 0; i < feedEntries.length; i += batchSize) {
+      const batch = feedEntries.slice(i, i + batchSize);
+      const feedPromises = batch.map(async ([feedName, feedUrl]) => {
+        try {
+          const response = await fetch(feedUrl);
+          const data = await response.json();
+          
+          if (data.status === 'ok' && data.items) {
+            data.items.slice(0, 3).forEach(item => { // Limit to 3 items per feed to avoid overwhelming
+              const trigger = analyzeTrigger(item, feedName);
+              if (trigger) {
+                allTriggers.push(trigger);
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching ${feedName}:`, error);
+        }
+      });
+      
+      await Promise.all(feedPromises);
+      // Small delay between batches to be respectful to RSS services
+      if (i + batchSize < feedEntries.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
     
     // Sort by priority and date
     allTriggers.sort((a, b) => {
@@ -533,15 +563,30 @@ function generatePotentialContacts(company) {
 
 // Source validation system
 const VALIDATED_SOURCES = {
+  // Official FDA Sources
   "FDA News": { validated: true, credibility: "high" },
-  "FDA Warning Letters": { validated: true, credibility: "high" },
-  "Pharmaphorum": { validated: true, credibility: "high" },
-  "Pharmaceutical Executive": { validated: true, credibility: "high" },
   "FDA Law Blog": { validated: true, credibility: "high" },
-  "PharmTech News": { validated: true, credibility: "medium" },
-  "FierceBiotech": { validated: true, credibility: "high" },
+  "FDA Warning Letters": { validated: true, credibility: "high" },
+  
+  // Major Trade Publications
+  "Pharmaceutical Executive": { validated: true, credibility: "high" },
   "BioPharma Dive": { validated: true, credibility: "high" },
-  "Regulatory Affairs Professionals": { validated: true, credibility: "high" }
+  "FierceBiotech": { validated: true, credibility: "high" },
+  "FiercePharma": { validated: true, credibility: "high" },
+  "Endpoints News": { validated: true, credibility: "high" },
+  "Pharmaphorum": { validated: true, credibility: "high" },
+  "PharmaLetter": { validated: true, credibility: "high" },
+  
+  // Scientific and Clinical Sources
+  "Nature Biotechnology": { validated: true, credibility: "high" },
+  "ClinicalTrials.gov": { validated: true, credibility: "high" },
+  "BioWorld": { validated: true, credibility: "high" },
+  
+  // Professional and Regulatory
+  "Regulatory Affairs Professionals": { validated: true, credibility: "high" },
+  "Scrip Intelligence": { validated: true, credibility: "high" },
+  "PharmTech": { validated: true, credibility: "medium" },
+  "PharmTech News": { validated: true, credibility: "medium" }
 };
 
 function getSourceValidation(source) {
