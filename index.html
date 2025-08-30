@@ -39,6 +39,20 @@
   }
   .cta-button { transition: all 0.3s ease; }
   .cta-button:hover { transform: translateY(-2px); shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .stats-box { 
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .stats-box:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  .stats-box.active {
+    ring: 3px;
+    ring-blue-500;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+  }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -62,21 +76,25 @@
 <!-- Stats Dashboard -->
 <div class="container mx-auto p-6">
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByPriority('critical')" title="Click to filter critical priority triggers">
       <div class="text-2xl font-bold text-red-600" id="criticalCount">0</div>
       <div class="text-gray-600">Critical Triggers</div>
+      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('warning-letter')" title="Click to filter warning letters">
       <div class="text-2xl font-bold text-orange-600" id="warningCount">0</div>
       <div class="text-gray-600">Warning Letters</div>
+      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('patent-expiry')" title="Click to filter patent issues">
       <div class="text-2xl font-bold text-purple-600" id="patentCount">0</div>
       <div class="text-gray-600">Patent Issues</div>
+      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('investment-need')" title="Click to filter investment opportunities">
       <div class="text-2xl font-bold text-green-600" id="investmentCount">0</div>
       <div class="text-gray-600">Investment Opportunities</div>
+      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
     </div>
   </div>
 
@@ -106,6 +124,9 @@
       </div>
       <button onclick="refreshData()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
         <span id="refreshButton">Refresh Data</span>
+      </button>
+      <button onclick="clearFilters()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+        Clear Filters
       </button>
       <button onclick="exportLeads()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
         Export Leads
@@ -235,6 +256,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('triggerFilter').addEventListener('change', filterTriggers);
   document.getElementById('priorityFilter').addEventListener('change', filterTriggers);
   
+  // Initialize active stats box state
+  updateActiveStatsBox();
+  
   // Debug: Log any navigation attempts
   window.addEventListener('beforeunload', function(e) {
     console.log('Page navigation attempt detected');
@@ -304,6 +328,7 @@ async function refreshData() {
     
     filteredTriggers = [...allTriggers];
     updateStats();
+    updateActiveStatsBox();
     renderTriggers();
     
     document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
@@ -606,7 +631,50 @@ function filterTriggers() {
     return matchesTrigger && matchesPriority;
   });
   
+  updateActiveStatsBox();
   renderTriggers();
+}
+
+// Filter by priority (for Critical Triggers box)
+function filterByPriority(priority) {
+  document.getElementById('priorityFilter').value = priority;
+  document.getElementById('triggerFilter').value = ''; // Clear trigger filter
+  filterTriggers();
+  
+  // Scroll to results
+  document.getElementById('triggersContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Filter by trigger type (for specific trigger boxes)
+function filterByTriggerType(triggerType) {
+  document.getElementById('triggerFilter').value = triggerType;
+  document.getElementById('priorityFilter').value = ''; // Clear priority filter
+  filterTriggers();
+  
+  // Scroll to results
+  document.getElementById('triggersContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Update active state of stats boxes based on current filters
+function updateActiveStatsBox() {
+  // Remove active class from all stats boxes
+  document.querySelectorAll('.stats-box').forEach(box => {
+    box.classList.remove('active');
+  });
+  
+  const triggerFilter = document.getElementById('triggerFilter').value;
+  const priorityFilter = document.getElementById('priorityFilter').value;
+  
+  // Add active class to matching stats box
+  if (priorityFilter === 'critical') {
+    document.querySelector('[onclick="filterByPriority(\'critical\')"]').classList.add('active');
+  } else if (triggerFilter === 'warning-letter') {
+    document.querySelector('[onclick="filterByTriggerType(\'warning-letter\')"]').classList.add('active');
+  } else if (triggerFilter === 'patent-expiry') {
+    document.querySelector('[onclick="filterByTriggerType(\'patent-expiry\')"]').classList.add('active');
+  } else if (triggerFilter === 'investment-need') {
+    document.querySelector('[onclick="filterByTriggerType(\'investment-need\')"]').classList.add('active');
+  }
 }
 
 function showLeadDetails(triggerId) {
@@ -1635,6 +1703,13 @@ Organizations that thrive in today's pharmaceutical landscape are those who:
 ✅ Focus on sustainable competitive advantages
 
 The companies that emerge stronger from industry challenges are those who turn market intelligence into strategic action.`;
+}
+
+// Clear all filters and show all triggers
+function clearFilters() {
+  document.getElementById('triggerFilter').value = '';
+  document.getElementById('priorityFilter').value = '';
+  filterTriggers();
 }
 
 // Auto-refresh every 30 minutes
