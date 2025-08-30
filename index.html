@@ -22,6 +22,18 @@
   .source-validated { color: #10b981; }
   .source-unvalidated { color: #ef4444; }
   .linkedin-preview { max-height: 300px; overflow-y: auto; }
+  .modal-scrollable { 
+    max-height: 85vh; 
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-content-scrollable {
+    max-height: 70vh;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 8px;
+  }
   .cta-button { transition: all 0.3s ease; }
   .cta-button:hover { transform: translateY(-2px); shadow: 0 4px 12px rgba(0,0,0,0.15); }
 </style>
@@ -113,9 +125,9 @@
 <!-- Lead Details Modal -->
 <div id="leadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
   <div class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-90vh overflow-y-auto">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full modal-scrollable">
+      <div class="p-6 flex flex-col h-full">
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
           <h3 class="text-xl font-bold">Lead Details</h3>
           <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +135,7 @@
             </svg>
           </button>
         </div>
-        <div id="modalContent">
+        <div id="modalContent" class="modal-content-scrollable">
           <!-- Modal content will be inserted here -->
         </div>
       </div>
