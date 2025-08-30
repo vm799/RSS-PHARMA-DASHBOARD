@@ -562,7 +562,7 @@ function markAsContacted(triggerId) {
 
 function exportLeads() {
   const csvContent = [
-    ['Company', 'Trigger Type', 'Priority', 'Date', 'Title', 'Outreach Strategy', 'Contact Role', 'Contact Email', 'Email Subject', 'Generated Email Copy', 'Source URL'].join(','),
+    ['Company', 'Trigger Type', 'Priority', 'Date', 'Title', 'Outreach Strategy', 'Contact Name', 'Contact Role', 'Contact Email', 'Email Subject', 'Generated Email Copy', 'Source URL'].join(','),
     ...filteredTriggers.map(trigger => {
       const emailContent = generatePersonalizedEmail(trigger);
       const emailLines = emailContent.split('\n');
@@ -576,6 +576,7 @@ function exportLeads() {
         `"${new Date(trigger.date).toLocaleDateString()}"`,
         `"${trigger.title.replace(/"/g, '""')}"`,
         `"${trigger.actionable.replace(/"/g, '""')}"`,
+        `"${contact.name}"`,
         `"${contact.role}"`,
         `"${contact.email}"`,
         `"${subject.replace(/"/g, '""')}"`,
