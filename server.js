@@ -9,38 +9,50 @@ const PORT = process.env.PORT || 3000;
 // Serve static files
 app.use(express.static('.'));
 
-// Verified working RSS feeds
+// Verified working RSS feeds (tested and confirmed functional)
 const RSS_FEEDS = [
-  'https://www.pharmaphorum.com/feed/',
   'https://www.biopharmadive.com/feeds/news/',
   'https://feeds.feedburner.com/fiercebiotech',
-  'https://www.pharmtech.com/rss',
   'https://feeds.feedburner.com/fiercepharma',
+  'https://www.pharmtech.com/rss',
   'https://www.outsourcing-pharma.com/RSS/News',
   'https://www.in-pharmatechnologist.com/RSS/News',
   'https://feeds.feedburner.com/PharmaTimes-News',
-  'https://www.nature.com/nrd.rss',
   'https://www.clinicalleader.com/rss',
   'https://www.appliedclinicaltrialsonline.com/rss',
   'https://www.raps.org/news-and-articles/rss',
-  'https://www.thefdalawblog.com/feed',
-  'https://clinicaltrials.gov/ct2/results/rss.xml?lup_d=14',
-  'https://www.bioworld.com/rss/bioworld-news.xml'
+  'https://www.bioworld.com/rss/bioworld-news.xml',
+  'https://www.thefdalawblog.com/feed'
 ];
 
-// Trigger keywords for pharmaceutical monitoring
+// Enhanced trigger keywords with broader pharmaceutical coverage
 const TRIGGER_KEYWORDS = [
-  'FDA approval', 'drug approval', 'clinical trial', 'phase III', 'phase II', 'phase I',
-  'patent expiry', 'patent expiration', 'generic drug', 'biosimilar', 'breakthrough therapy',
-  'orphan drug', 'rare disease', 'accelerated approval', 'priority review', 'fast track',
-  'regulatory approval', 'new indication', 'label expansion', 'market authorization',
-  'EMA approval', 'CE marking', 'regulatory submission', 'NDA', 'BLA', 'ANDA',
-  'clinical data', 'efficacy', 'safety profile', 'adverse events', 'side effects',
-  'market launch', 'commercialization', 'partnership', 'licensing deal', 'acquisition',
-  'merger', 'collaboration', 'joint venture', 'milestone payment', 'upfront payment',
-  'royalty', 'licensing agreement', 'development program', 'pipeline', 'portfolio',
-  'warning letter', '483', 'FDA inspection', 'compliance violation', 'regulatory action',
-  'recall', 'safety issue', 'manufacturing defect', 'contamination', 'quality issue'
+  // Regulatory & Approval
+  'FDA', 'approval', 'approved', 'clinical trial', 'phase III', 'phase II', 'phase I', 'phase 3', 'phase 2', 'phase 1',
+  'drug', 'medication', 'therapy', 'treatment', 'pharmaceutical', 'biotech', 'medicine',
+  
+  // Patents & Competition
+  'patent', 'generic', 'biosimilar', 'exclusivity', 'competition', 'expir', 'cliff',
+  
+  // Business & Investment
+  'partnership', 'deal', 'acquisition', 'merger', 'collaboration', 'investment', 'funding', 'IPO',
+  'milestone', 'royalty', 'license', 'agreement', 'contract', 'revenue', 'sales',
+  
+  // Regulatory Issues
+  'warning letter', '483', 'inspection', 'compliance', 'violation', 'enforcement', 'regulatory',
+  'recall', 'safety', 'adverse', 'contamination', 'quality', 'manufacturing', 'GMP',
+  
+  // Clinical Development
+  'trial', 'study', 'endpoint', 'efficacy', 'safety', 'patient', 'enrollment', 'data',
+  'results', 'outcome', 'response', 'failure', 'success', 'interim', 'analysis',
+  
+  // Market & Commercial
+  'launch', 'market', 'commercial', 'price', 'pricing', 'reimbursement', 'access',
+  'indication', 'label', 'expansion', 'new', 'first', 'breakthrough', 'orphan',
+  
+  // Companies & Organizations
+  'pfizer', 'novartis', 'roche', 'merck', 'abbvie', 'sanofi', 'gsk', 'gilead', 'amgen',
+  'bristol myers', 'astrazeneca', 'eli lilly', 'biogen', 'regeneron', 'vertex', 'moderna'
 ];
 
 async function fetchRSSFeed(url) {
@@ -107,15 +119,26 @@ app.get('/api/rss-data', async (req, res) => {
           items: feedData.items.slice(0, 10) // Keep latest 10 items per feed
         };
 
-        // Process items for lead scoring
+        // Process items for lead scoring (include all pharma-related content)
         feedData.items.forEach(item => {
-          const score = scoreContent(item.title + ' ' + item.description);
-          if (score > 0) {
+          const content = (item.title + ' ' + (item.description || '')).toLowerCase();
+          const score = scoreContent(item.title + ' ' + (item.description || ''));
+          
+          // Include items that are pharmaceutical-related (score > 0) or contain pharma companies
+          const isPharmaceutical = score > 0 || 
+            content.includes('pharmaceutical') || 
+            content.includes('biotech') || 
+            content.includes('pharma') || 
+            content.includes('drug') || 
+            content.includes('fda') ||
+            content.includes('clinical');
+          
+          if (isPharmaceutical) {
             const processedItem = {
               ...item,
               source: feedTitle,
               sourceUrl: feedUrl,
-              score: score,
+              score: Math.max(score, 1), // Ensure minimum score of 1 for pharma content
               category: classifyLead(item, score),
               processedAt: new Date().toISOString()
             };

@@ -4,21 +4,18 @@ const path = require('path');
 
 // Verified working RSS feeds for pharmaceutical industry monitoring
 const RSS_FEEDS = [
-  'https://www.pharmaphorum.com/feed/',
   'https://www.biopharmadive.com/feeds/news/',
   'https://feeds.feedburner.com/fiercebiotech',
-  'https://www.pharmtech.com/rss',
   'https://feeds.feedburner.com/fiercepharma',
+  'https://www.pharmtech.com/rss',
   'https://www.outsourcing-pharma.com/RSS/News',
   'https://www.in-pharmatechnologist.com/RSS/News',
   'https://feeds.feedburner.com/PharmaTimes-News',
-  'https://www.nature.com/nrd.rss',
   'https://www.clinicalleader.com/rss',
   'https://www.appliedclinicaltrialsonline.com/rss',
   'https://www.raps.org/news-and-articles/rss',
-  'https://www.thefdalawblog.com/feed',
-  'https://clinicaltrials.gov/ct2/results/rss.xml?lup_d=14',
-  'https://www.bioworld.com/rss/bioworld-news.xml'
+  'https://www.bioworld.com/rss/bioworld-news.xml',
+  'https://www.thefdalawblog.com/feed'
 ];
 
 // Trigger keywords from automation.js
