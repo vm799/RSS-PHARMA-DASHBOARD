@@ -168,32 +168,11 @@
 </div>
 
 <script>
-// Enhanced RSS feeds targeting regulatory and business triggers (with working feeds + demo data)
-const rssFeeds = {
-  // Core FDA and Regulatory Feeds
-  "FDA Law Blog": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thefdalawblog.com/feed",
-  "FDA News": "https://api.rss2json.com/v1/api.json?rss_url=https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds-fda-news-information",
-  
-  // Industry News and Analysis
-  "Pharmaceutical Executive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmexec.com/rss",
-  "BioPharma Dive": "https://api.rss2json.com/v1/api.json?rss_url=https://www.biopharmadive.com/feeds/news/",
-  "FierceBiotech": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/fiercebiotech",
-  "FiercePharma": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/fiercepharma",
-  "Endpoints News": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/EndpointsNews",
-  
-  // Clinical Trials and R&D
-  "ClinicalTrials.gov": "https://api.rss2json.com/v1/api.json?rss_url=https://clinicaltrials.gov/ct2/results/rss.xml?lup_d=14",
-  "Nature Biotechnology": "https://api.rss2json.com/v1/api.json?rss_url=https://feeds.nature.com/nbt/rss/current",
-  
-  // Business and Investment
-  "BioWorld": "https://api.rss2json.com/v1/api.json?rss_url=https://www.bioworld.com/rss/bioworld-news.xml",
-  "PharmaLetter": "https://api.rss2json.com/v1/api.json?rss_url=https://www.thepharmaletter.com/rss",
-  "Scrip Intelligence": "https://api.rss2json.com/v1/api.json?rss_url=https://scrip.pharmaintelligence.informa.com/rss/news",
-  
-  // Regulatory Compliance
-  "Regulatory Affairs Professionals": "https://api.rss2json.com/v1/api.json?rss_url=https://www.raps.org/news-and-articles/rss",
-  "PharmTech": "https://api.rss2json.com/v1/api.json?rss_url=https://www.pharmtech.com/rss",
-  "Pharmaphorum": "https://api.rss2json.com/v1/api.json?rss_url=https://pharmaphorum.com/rssfeed"
+// Data sources - now using pre-processed files instead of direct RSS API calls
+const DATA_SOURCES = {
+  leads: 'data/leads.json',      // Processed leads with scoring
+  feeds: 'data/feeds.json',      // Raw feed data
+  metadata: 'data/metadata.json' // Processing metadata
 };
 
 // Demo pharmaceutical news data for immediate testing
@@ -310,43 +289,58 @@ async function refreshData() {
   allTriggers = [];
   
   try {
-    // First, add demo pharmaceutical news data for immediate results
-    DEMO_PHARMA_NEWS.forEach(item => {
-      const trigger = analyzeTrigger(item, item.source);
-      if (trigger) {
-        allTriggers.push(trigger);
-      }
-    });
-    
-    // Then try to fetch live RSS feeds (limit concurrent requests for better performance)
-    const feedEntries = Object.entries(rssFeeds);
-    const batchSize = 5; // Process 5 feeds at a time to avoid rate limiting
-    
-    for (let i = 0; i < feedEntries.length; i += batchSize) {
-      const batch = feedEntries.slice(i, i + batchSize);
-      const feedPromises = batch.map(async ([feedName, feedUrl]) => {
-        try {
-          const response = await fetch(feedUrl);
-          const data = await response.json();
+    // Load live RSS data from server API
+    try {
+      const response = await fetch('/api/rss-data');
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Loaded ${data.leads.length} leads from ${data.metadata.successfulFeeds}/${data.metadata.totalFeeds} RSS feeds`);
+        
+        // Convert leads data to trigger format
+        data.leads.forEach(lead => {
+          const trigger = {
+            id: Math.random().toString(36).substr(2, 9),
+            title: lead.title,
+            description: lead.description || '',
+            link: lead.link,
+            source: lead.source,
+            date: lead.pubDate || lead.processedAt,
+            triggerType: lead.category || 'general',
+            priority: lead.score > 3 ? 'critical' : lead.score > 1 ? 'high' : 'medium',
+            company: extractCompanyName(lead.title) || 'Unknown',
+            actionable: generateActionableInsights(lead.category || 'general', extractCompanyName(lead.title), lead.title),
+            contacts: generatePotentialContacts(extractCompanyName(lead.title))
+          };
           
-          if (data.status === 'ok' && data.items) {
-            data.items.slice(0, 3).forEach(item => { // Limit to 3 items per feed to avoid overwhelming
-              const trigger = analyzeTrigger(item, feedName);
-              if (trigger) {
-                allTriggers.push(trigger);
-              }
-            });
+          if (trigger.company !== 'Unknown') {
+            allTriggers.push(trigger);
           }
-        } catch (error) {
-          console.error(`Error fetching ${feedName}:`, error);
-        }
-      });
-      
-      await Promise.all(feedPromises);
-      // Small delay between batches to be respectful to RSS services
-      if (i + batchSize < feedEntries.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        });
+        
+        // Update metadata
+        document.getElementById('lastUpdate').textContent = 
+          new Date(data.metadata.lastUpdated).toLocaleString();
+        console.log(`Data last updated: ${data.metadata.lastUpdated}`);
+        console.log(`Total feeds processed: ${data.metadata.successfulFeeds}/${data.metadata.totalFeeds}`);
+        
+      } else {
+        throw new Error(`API responded with status: ${response.status}`);
       }
+    } catch (error) {
+      console.error('Failed to load RSS data from server:', error);
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+      
+      // Show error message to user
+      const container = document.getElementById('triggersContainer');
+      container.innerHTML = `
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <div class="text-red-800 font-semibold mb-2">⚠️ Unable to Load RSS Feed Data</div>
+          <div class="text-red-600 text-sm mb-4">The server is currently unable to fetch the latest pharmaceutical news from RSS feeds.</div>
+          <button onclick="refreshData()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Try Again
+          </button>
+        </div>
+      `;
     }
     
     // Sort by priority and date
@@ -360,8 +354,6 @@ async function refreshData() {
     updateStats();
     updateActiveStatsBox();
     renderTriggers();
-    
-    document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
     
   } finally {
     loading.classList.add('hidden');

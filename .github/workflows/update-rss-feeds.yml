@@ -1,0 +1,33 @@
+name: Update RSS Feeds
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install node-fetch
+
+      - name: Fetch RSS feeds
+        run: node scripts/fetch-rss.js
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'RSS Feed Bot'
+          git config --global user.email 'action@github.com'
+          git add data/
+          git diff --staged --quiet || git commit -m "Update RSS feeds data"
+          git push

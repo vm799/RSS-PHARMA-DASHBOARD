@@ -2,12 +2,12 @@
   "name": "pharma-lead-dashboard",
   "version": "1.0.0",
   "description": "Automated pharmaceutical lead generation dashboard for medical research platform outreach",
-  "main": "automation.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node automation.js",
-    "dev": "node -e \"console.log('Open index.html in your browser to view the dashboard')\"",
-    "daily": "node automation.js",
-    "serve": "python3 -m http.server 8000",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "daily": "node scripts/fetch-rss.js",
+    "serve": "node server.js",
     "schedule": "echo 'Add this to crontab for daily runs: 0 9 * * * cd /path/to/dashboard && npm run daily'"
   },
   "keywords": [
@@ -21,7 +21,10 @@
   ],
   "author": "Medical Research Platform Team",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
   "engines": {
     "node": ">=14.0.0"
   }
