@@ -53,22 +53,33 @@ This dashboard transforms pharmaceutical news into actionable sales leads by:
 
 ## 🚀 **Quick Start Guide**
 
-### **Option 1: Browser Dashboard (Recommended)**
-1. Open `index.html` in your web browser
-2. Click **"Refresh Data"** to scan latest pharmaceutical news
+### **🌐 Deploy to Render (Recommended)**
+1. **Connect Repository**: Link this GitHub repo to your Render account
+2. **Build Command**: `npm install`  
+3. **Start Command**: `npm start`
+4. **Environment**: Node.js
+5. **Deploy**: Click deploy and get your live dashboard URL
+
+### **💻 Local Development**
+```bash
+# Install dependencies
+npm install
+
+# Start the server
+npm start
+# Dashboard available at http://localhost:3000
+
+# Run RSS processing manually
+npm run daily
+```
+
+### **📱 Using the Dashboard**
+1. Visit your deployed Render URL or localhost:3000
+2. Click **"Refresh Data"** to scan latest pharmaceutical news from 15 RSS feeds
 3. Use **stats boxes** or filters to find specific trigger types
 4. Click any lead card to see detailed outreach strategy
 5. Generate personalized emails and LinkedIn content
 6. Export leads to CSV for your CRM
-
-### **Option 2: Automated Daily Processing**
-```bash
-# Run daily automation script
-node automation.js
-
-# Schedule daily runs (add to crontab)
-0 9 * * * cd /path/to/pharma-dashboard && node automation.js
-```
 
 ---
 
@@ -184,11 +195,17 @@ Each trigger displays:
 - **Tailwind CSS**: Responsive design framework
 - **Vanilla JS**: No external dependencies for maximum compatibility
 
+### **Backend Server (Express.js)**
+- **Node.js + Express**: Server-side RSS processing eliminates CORS issues
+- **Live RSS Processing**: Real-time feed fetching with `/api/rss-data` endpoint
+- **Error Handling**: Graceful fallbacks when RSS feeds are unavailable
+- **Rate Limiting**: Respectful 500ms delays between feed requests
+
 ### **Data Processing**
 - **RSS2JSON API**: Converts RSS feeds to JSON for easy processing
-- **Client-side processing**: All data handled in browser for privacy
-- **Batch RSS fetching**: 5 feeds processed simultaneously with rate limiting
-- **Intelligent caching**: Optimized performance with 30-minute refresh cycles
+- **Server-side processing**: Eliminates browser CORS limitations
+- **Batch RSS fetching**: 15 feeds processed with intelligent rate limiting
+- **Real-time updates**: Fresh data on every dashboard refresh
 
 ### **Lead Generation Engine**
 - **Keyword Analysis**: Advanced trigger detection using pharmaceutical terminology
@@ -306,17 +323,21 @@ export SLACK_WEBHOOK=https://hooks.slack.com/your-webhook-url
 
 ## 🛠️ **Technical Requirements**
 
-### **Browser Requirements**
+### **Deployment Requirements (Render/Heroku/etc.)**
+- Node.js 18+ runtime environment
+- 512MB RAM minimum for RSS processing
+- Express.js server capabilities
+- Environment variables support (optional)
+
+### **Browser Requirements (End Users)**
 - Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
 - JavaScript enabled
-- Internet connection for RSS feed access
-- Local storage for preferences and lead tracking
+- Internet connection for dashboard access
 
-### **Server Requirements (for automation)**
-- Node.js 14+ for automation scripts
-- 512MB RAM minimum
-- 1GB disk space for logs and exports
-- Cron or task scheduler for automated runs
+### **Local Development**
+- Node.js 18+ 
+- npm package manager
+- Git for repository management
 
 ---
 
@@ -336,11 +357,12 @@ For questions about implementation, customization, or RSS feed additions:
 4. Clear browser cache and refresh if seeing stale data
 
 ### **Customization Options**
-- **Add New RSS Feeds**: Update `rssFeeds` object in `index.html`
-- **Modify Trigger Keywords**: Adjust `triggerKeywords` for different events
-- **Update Contact Templates**: Customize `generatePersonalizedEmail()` function
+- **Add New RSS Feeds**: Update `RSS_FEEDS` array in `server.js`
+- **Modify Trigger Keywords**: Adjust `TRIGGER_KEYWORDS` array for different events
+- **Update Contact Templates**: Customize `generatePersonalizedEmail()` function in `index.html`
 - **Change Branding**: Update SyneticX references and styling
 - **Add New Trigger Types**: Extend trigger detection and categorization logic
+- **API Endpoints**: Add custom endpoints to `server.js` for additional functionality
 
 ---
 
@@ -362,7 +384,10 @@ For questions about implementation, customization, or RSS feed additions:
 
 **Ready to transform pharmaceutical news into sales opportunities?** 🎯
 
-Open `index.html` and start identifying your next million-dollar pharma consulting engagement today!
+Deploy to Render in minutes and start identifying your next million-dollar pharma consulting engagement today!
+
+### **🚀 One-Click Render Deployment**
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 ---
 
