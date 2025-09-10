@@ -6,161 +6,451 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pharma Lead Generation Dashboard</title>
+<title>PHARMA-RSS-TERMINAL | Lead Generation System</title>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <style>
-  .trigger-critical { border-left: 6px solid #dc2626; }
-  .trigger-warning { border-left: 6px solid #f59e0b; }
-  .trigger-patent { border-left: 6px solid #8b5cf6; }
-  .trigger-compliance { border-left: 6px solid #ef4444; }
-  .trigger-investment { border-left: 6px solid #10b981; }
-  .trigger-trial { border-left: 6px solid #3b82f6; }
-  .loading-spinner { animation: spin 1s linear infinite; }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  .fade-in { animation: fadeIn 0.5s ease-in; }
-  @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
-  .email-preview { max-height: 400px; overflow-y: auto; }
-  .copy-success { animation: flash 0.5s ease-in-out; }
-  @keyframes flash { 0%, 100% { background-color: #10b981; } 50% { background-color: #34d399; } }
-  .source-validated { color: #10b981; }
-  .source-unvalidated { color: #ef4444; }
-  .linkedin-preview { max-height: 300px; overflow-y: auto; }
-  .modal-scrollable { 
-    max-height: 85vh; 
-    overflow-y: auto;
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;300;400;500&display=swap');
+  
+  :root {
+    --terminal-green: #00ff00;
+    --terminal-green-dim: #008000;
+    --terminal-cyan: #00ffff;
+    --terminal-bg: #000814;
+    --terminal-darker: #000510;
+    --card-bg: rgba(0, 8, 20, 0.95);
+    --text-primary: #00ff00;
+    --text-secondary: #00cc00;
+    --text-dim: #008000;
+    --text-body: #66b366;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+    font-weight: 300;
+    background: var(--terminal-bg);
+    background-image: 
+      linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text-body);
+    overflow-x: hidden;
+    position: relative;
+    line-height: 1.4;
+    font-size: 13px;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+  }
+  
+  .neon-text {
+    font-weight: 600;
+    text-shadow: none;
+  }
+  
+  .retro-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    color: var(--terminal-green);
+    text-shadow: none;
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+  
+  .terminal-box {
+    border: 1px solid var(--terminal-green);
+    background: var(--card-bg);
+    color: var(--text-body);
+    border-radius: 0;
+  }
+  
+  .terminal-box-dim {
+    border: 1px solid var(--terminal-green-dim);
+    background: var(--card-bg);
+    color: var(--text-body);
+    border-radius: 0;
+  }
+  
+  .terminal-button {
+    border: 1px solid var(--terminal-green);
+    background: transparent;
+    color: var(--terminal-green);
+    border-radius: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    font-size: 12px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+  }
+  
+  .terminal-button:hover {
+    background: var(--terminal-green);
+    color: var(--terminal-bg);
+  }
+  
+  .subtle-glow {
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+  }
+  
+  .gentle-pulse {
+    animation: gentle-pulse 3s ease-in-out infinite;
+  }
+  
+  @keyframes gentle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+    color: var(--neon-cyan);
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  .game-window {
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .game-header {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    padding: 12px 20px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
-  .modal-content-scrollable {
-    max-height: 70vh;
-    overflow-y: auto;
-    flex: 1;
-    padding-right: 8px;
+  
+  .game-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--neon-pink);
+    box-shadow: 0 0 8px var(--neon-pink);
   }
-  .cta-button { transition: all 0.3s ease; }
-  .cta-button:hover { transform: translateY(-2px); shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .stats-box { 
+  
+  .game-card {
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
     transition: all 0.3s ease;
-    cursor: pointer;
+    position: relative;
   }
-  .stats-box:hover { 
-    transform: translateY(-2px); 
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  
+  .game-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+    border-color: var(--neon-pink);
   }
-  .stats-box.active {
-    ring: 3px;
-    ring-blue-500;
+  
+  .game-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    animation: scan 4s linear infinite;
+    opacity: 0.6;
+  }
+  
+  @keyframes scan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+  
+  .priority-critical {
+    border-color: var(--neon-pink) !important;
+    box-shadow: 0 0 15px rgba(255, 0, 128, 0.3) !important;
+    border-left: 4px solid var(--neon-pink) !important;
+  }
+  
+  .priority-high {
+    border-color: var(--neon-purple) !important;
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.3) !important;
+    border-left: 4px solid var(--neon-purple) !important;
+  }
+  
+  .priority-medium {
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3) !important;
+    border-left: 4px solid var(--neon-cyan) !important;
+  }
+  
+  .priority-low {
+    border-color: rgba(0, 255, 255, 0.5) !important;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2) !important;
+    border-left: 4px solid rgba(0, 255, 255, 0.5) !important;
+  }
+  
+  .cyber-button {
+    background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple));
+    border: 1px solid var(--neon-cyan);
+    color: black;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  }
+  
+  .cyber-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+  }
+  
+  .cyber-button-secondary {
+    background: transparent;
+    border: 1px solid var(--neon-purple);
+    color: var(--neon-purple);
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .cyber-button-secondary:hover {
+    background: rgba(128, 0, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.4);
+  }
+  
+  .stats-counter {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    text-shadow: none;
+    animation: gentle-pulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes gentle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  
+  .clean-grid {
+    background: var(--dark-bg);
+  }
+  
+  .subtle-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .subtle-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: subtle-shine 4s ease-in-out infinite;
+  }
+  
+  @keyframes subtle-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
 </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen">
 
-<!-- Header -->
-<header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
-  <div class="container mx-auto">
+<!-- Retro Header -->
+<header class="terminal-window m-4 mb-8">
+  <div class="terminal-header">
+    <div class="terminal-dot"></div>
+    <div class="terminal-dot bg-yellow-400 shadow-yellow-400"></div>
+    <div class="terminal-dot bg-green-400 shadow-green-400"></div>
+    <div class="flex-1 text-center">
+      <span class="font-bold text-sm" style="color: var(--neon-cyan);">PHARMA_NEXUS_2077.exe</span>
+    </div>
+  </div>
+  <div class="p-6 bg-black bg-opacity-90">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-3xl font-bold">Pharma Lead Generation Dashboard</h1>
-        <p class="text-blue-100 mt-1">Real-time triggers for medical research platform outreach</p>
+        <h1 class="text-xl font-bold retro-title">PHARMA-RSS-TERMINAL</h1>
+        <p class="text-sm mt-1" style="color: var(--terminal-green-dim);">pharmaceutical intelligence monitor v2.1</p>
+        <p class="text-xs mt-1" style="color: var(--text-dim);">real-time lead detection system</p>
       </div>
-      <div class="text-right">
-        <div class="text-sm text-blue-100">Last Updated:</div>
-        <div id="lastUpdate" class="text-lg font-semibold">Loading...</div>
+      <div class="text-right terminal-box p-3">
+        <div class="text-xs" style="color: var(--terminal-green-dim);">LAST SCAN:</div>
+        <div id="lastUpdate" class="text-sm font-bold" style="color: var(--terminal-green);">INITIALIZING...</div>
+        <div class="text-xs mt-1" style="color: var(--terminal-green-dim);">SYSTEM ONLINE</div>
       </div>
     </div>
   </div>
 </header>
 
-<!-- Stats Dashboard -->
+<!-- Retro Stats Dashboard -->
 <div class="container mx-auto p-6">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold neon-text text-center mb-2" style="color: var(--neon-cyan); font-family: 'Orbitron', monospace;">🔥 THREAT DETECTION MATRIX 🔥</h2>
+    <p class="text-center text-sm" style="color: var(--neon-purple);">[ CLICK SECTORS TO FILTER NEURAL NETWORK RESULTS ]</p>
+  </div>
+  
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByPriority('critical')" title="Click to filter critical priority triggers">
-      <div class="text-2xl font-bold text-red-600" id="criticalCount">0</div>
-      <div class="text-gray-600">Critical Triggers</div>
-      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
+    <div class="neon-pink-box rounded-lg p-6 text-center cursor-pointer transition-all duration-300" onclick="filterByPriority('critical')" title="🚨 CRITICAL THREAT LEVEL">
+      <div class="text-xs font-bold mb-2">⚠️ CRITICAL ⚠️</div>
+      <div class="stats-counter" id="criticalCount">0</div>
+      <div class="text-sm font-bold">HIGH VALUE TARGETS</div>
+      <div class="text-xs mt-2 opacity-75">🎯 PRIORITY ALPHA</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('warning-letter')" title="Click to filter warning letters">
-      <div class="text-2xl font-bold text-orange-600" id="warningCount">0</div>
-      <div class="text-gray-600">Warning Letters</div>
-      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
+    
+    <div class="game-box rounded-lg p-6 text-center cursor-pointer transition-all duration-300" onclick="filterByTriggerType('warning-letter')" title="📋 REGULATORY VIOLATIONS">
+      <div class="text-xs font-bold mb-2">📋 WARNING LETTERS</div>
+      <div class="stats-counter" id="warningCount">0</div>
+      <div class="text-sm font-bold">FDA ENFORCEMENT</div>
+      <div class="text-xs mt-2 opacity-75">⚡ COMPLIANCE BREACH</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('patent-expiry')" title="Click to filter patent issues">
-      <div class="text-2xl font-bold text-purple-600" id="patentCount">0</div>
-      <div class="text-gray-600">Patent Issues</div>
-      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
+    
+    <div class="neon-purple-box rounded-lg p-6 text-center cursor-pointer transition-all duration-300" onclick="filterByTriggerType('patent-expiry')" title="🔒 INTELLECTUAL PROPERTY">
+      <div class="text-xs font-bold mb-2">🔒 PATENT CLIFF</div>
+      <div class="stats-counter" id="patentCount">0</div>
+      <div class="text-sm font-bold">IP VULNERABILITIES</div>
+      <div class="text-xs mt-2 opacity-75">💎 EXCLUSIVITY RISK</div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 text-center stats-box" onclick="filterByTriggerType('investment-need')" title="Click to filter investment opportunities">
-      <div class="text-2xl font-bold text-green-600" id="investmentCount">0</div>
-      <div class="text-gray-600">Investment Opportunities</div>
-      <div class="text-xs text-gray-400 mt-1">👆 Click to filter</div>
-    </div>
-  </div>
-
-  <!-- Filter Controls -->
-  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-    <div class="flex flex-wrap gap-4 items-center">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Trigger:</label>
-        <select id="triggerFilter" class="border rounded px-3 py-2">
-          <option value="">All Triggers</option>
-          <option value="warning-letter">Warning Letters (483s)</option>
-          <option value="patent-expiry">Patent Expiry</option>
-          <option value="compliance-issue">Compliance Issues</option>
-          <option value="trial-difficulty">Trial Difficulties</option>
-          <option value="investment-need">Investment Needs</option>
-          <option value="regulatory-delay">Regulatory Delays</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Priority:</label>
-        <select id="priorityFilter" class="border rounded px-3 py-2">
-          <option value="">All Priority</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-        </select>
-      </div>
-      <button onclick="refreshData()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        <span id="refreshButton">Refresh Data</span>
-      </button>
-      <button onclick="clearFilters()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-        Clear Filters
-      </button>
-      <button onclick="exportLeads()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        Export Leads
-      </button>
+    
+    <div class="cyber-box rounded-lg p-6 text-center cursor-pointer transition-all duration-300" onclick="filterByTriggerType('investment-need')" title="💰 FUNDING OPPORTUNITIES">
+      <div class="text-xs font-bold mb-2">💰 INVESTMENT</div>
+      <div class="stats-counter" id="investmentCount">0</div>
+      <div class="text-sm font-bold">CAPITAL HUNTING</div>
+      <div class="text-xs mt-2 opacity-75">🚀 GROWTH VECTOR</div>
     </div>
   </div>
 
-  <!-- Loading Indicator -->
+  <!-- Retro Control Panel -->
+  <div class="terminal-window mb-8">
+    <div class="terminal-header">
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot bg-yellow-400 shadow-yellow-400"></div>
+      <div class="terminal-dot bg-green-400 shadow-green-400"></div>
+      <div class="flex-1 text-center">
+        <span class="font-bold text-sm" style="color: var(--neon-pink);">🎮 NEURAL_FILTER_CONTROLS.exe</span>
+      </div>
+    </div>
+    <div class="p-6 bg-black bg-opacity-90">
+      <h3 class="text-lg font-bold mb-4 neon-text" style="color: var(--neon-cyan); font-family: 'Orbitron', monospace;">🔍 QUANTUM SEARCH PARAMETERS</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <div>
+          <label class="block text-sm font-bold mb-2 neon-text" style="color: var(--neon-orange);">⚡ THREAT TYPE:</label>
+          <select id="triggerFilter" class="w-full bg-black border-2 border-cyan-400 rounded px-3 py-2 text-cyan-400 font-mono">
+            <option value="" style="background: black; color: cyan;">>>> ALL THREATS <<<</option>
+            <option value="warning-letter" style="background: black; color: cyan;">📋 WARNING LETTERS (483s)</option>
+            <option value="patent-expiry" style="background: black; color: cyan;">🔒 PATENT EXPIRY</option>
+            <option value="compliance-issue" style="background: black; color: cyan;">⚠️ COMPLIANCE ISSUES</option>
+            <option value="trial-difficulty" style="background: black; color: cyan;">🧪 TRIAL DIFFICULTIES</option>
+            <option value="investment-need" style="background: black; color: cyan;">💰 INVESTMENT NEEDS</option>
+            <option value="regulatory-delay" style="background: black; color: cyan;">⏰ REGULATORY DELAYS</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-2 neon-text" style="color: var(--neon-pink);">🎯 PRIORITY LEVEL:</label>
+          <select id="priorityFilter" class="w-full bg-black border-2 border-pink-400 rounded px-3 py-2 text-pink-400 font-mono">
+            <option value="" style="background: black; color: #ff00ff;">>>> ALL PRIORITIES <<<</option>
+            <option value="critical" style="background: black; color: #ff00ff;">🚨 CRITICAL ALERT</option>
+            <option value="high" style="background: black; color: #ff00ff;">🔥 HIGH PRIORITY</option>
+            <option value="medium" style="background: black; color: #ff00ff;">⚡ MEDIUM RISK</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-2 neon-text" style="color: var(--neon-green);">🎮 NEURAL ACTIONS:</label>
+          <div class="space-y-2">
+            <button onclick="refreshData()" class="w-full cyber-box px-3 py-2 rounded font-bold text-xs">
+              <span id="refreshButton">🔄 RESCAN MATRIX</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="clearFilters()" class="neon-box px-4 py-2 rounded font-bold text-xs">
+          🗑️ CLEAR FILTERS
+        </button>
+        <button onclick="exportLeads()" class="game-box px-4 py-2 rounded font-bold text-xs">
+          💾 EXPORT INTEL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retro Loading Indicator -->
   <div id="loading" class="text-center py-8 hidden">
-    <div class="loading-spinner inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-    <p class="mt-2 text-gray-600">Scanning pharmaceutical news for triggers...</p>
+    <div class="neon-box rounded-lg p-6 mx-auto max-w-md">
+      <div class="loading-spinner inline-block w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mb-4"></div>
+      <p class="neon-text font-bold" style="color: var(--neon-cyan);">🔄 NEURAL NETWORK SCANNING...</p>
+      <p class="text-sm mt-2" style="color: var(--neon-purple);">>>> Analyzing pharmaceutical intelligence feeds <<<</p>
+      <div class="mt-4">
+        <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Triggers List -->
-  <div id="triggersContainer" class="space-y-4">
-    <!-- Dynamic content will be inserted here -->
+  <!-- Retro Intelligence Feed -->
+  <div class="terminal-window mb-8">
+    <div class="terminal-header">
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot bg-yellow-400 shadow-yellow-400"></div>
+      <div class="terminal-dot bg-green-400 shadow-green-400"></div>
+      <div class="flex-1 text-center">
+        <span class="text-black font-bold text-sm">💊 PHARMA_INTEL_STREAM.exe</span>
+      </div>
+    </div>
+    <div class="p-6 bg-black bg-opacity-90">
+      <h3 class="text-xl font-bold mb-4 neon-text text-center" style="color: var(--neon-cyan); font-family: 'Orbitron', monospace;">🧠 LIVE INTELLIGENCE FEED 🧠</h3>
+      <div id="triggersContainer" class="space-y-4 max-h-96 overflow-y-auto">
+        <!-- Dynamic neural intelligence content will be inserted here -->
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Lead Details Modal -->
-<div id="leadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+<!-- Retro Modal -->
+<div id="leadModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50">
   <div class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full modal-scrollable">
-      <div class="p-6 flex flex-col h-full">
-        <div class="flex justify-between items-center mb-4 flex-shrink-0">
-          <h3 class="text-xl font-bold">Lead Details</h3>
-          <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+    <div class="terminal-window max-w-4xl w-full">
+      <div class="terminal-header">
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot bg-yellow-400 shadow-yellow-400"></div>
+        <div class="terminal-dot bg-green-400 shadow-green-400"></div>
+        <div class="flex-1 text-center">
+          <span class="text-black font-bold text-sm">🔍 THREAT_ANALYSIS.exe</span>
         </div>
-        <div id="modalContent" class="modal-content-scrollable">
-          <!-- Modal content will be inserted here -->
+        <button onclick="closeModal()" class="text-black hover:text-red-500 font-bold">
+          ✕
+        </button>
+      </div>
+      <div class="p-6 bg-black bg-opacity-95 max-h-96 overflow-y-auto">
+        <div id="modalContent" class="text-cyan-400">
+          <!-- Retro modal content will be inserted here -->
         </div>
       </div>
     </div>
@@ -279,12 +569,20 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+let isRefreshing = false;
+
 async function refreshData() {
+  if (isRefreshing) {
+    console.log('Refresh already in progress, skipping...');
+    return;
+  }
+  
+  isRefreshing = true;
   const loading = document.getElementById('loading');
   const refreshButton = document.getElementById('refreshButton');
   
   loading.classList.remove('hidden');
-  refreshButton.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Refreshing...';
+  refreshButton.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>🔄 SCANNING...';
   
   allTriggers = [];
   
@@ -296,10 +594,17 @@ async function refreshData() {
         const data = await response.json();
         console.log(`Loaded ${data.leads.length} leads from ${data.metadata.successfulFeeds}/${data.metadata.totalFeeds} RSS feeds`);
         
-        // Convert leads data to trigger format
-        data.leads.forEach(lead => {
+        // Convert leads data to trigger format with deduplication
+        const processedTitles = new Set();
+        data.leads.forEach((lead, index) => {
+          // Skip duplicates based on title
+          if (processedTitles.has(lead.title)) {
+            return;
+          }
+          processedTitles.add(lead.title);
+          
           const trigger = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: `lead_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 5)}`,
             title: lead.title,
             description: lead.description || '',
             link: lead.link,
@@ -333,11 +638,13 @@ async function refreshData() {
       // Show error message to user
       const container = document.getElementById('triggersContainer');
       container.innerHTML = `
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <div class="text-red-800 font-semibold mb-2">⚠️ Unable to Load RSS Feed Data</div>
-          <div class="text-red-600 text-sm mb-4">The server is currently unable to fetch the latest pharmaceutical news from RSS feeds.</div>
-          <button onclick="refreshData()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Try Again
+        <div class="neon-pink-box rounded-lg p-8 text-center">
+          <div class="text-3xl mb-4">⚠️</div>
+          <div class="text-xl font-bold neon-text mb-2" style="color: var(--neon-pink);">NEURAL NETWORK FAILURE</div>
+          <div class="text-sm mb-4" style="color: var(--neon-orange);">>>> Connection to intelligence matrix interrupted <<<</div>
+          <div class="text-xs mb-6 opacity-75">Server unable to fetch pharmaceutical data streams</div>
+          <button onclick="refreshData()" class="cyber-box px-6 py-3 rounded-lg font-bold">
+            🔄 RESTART_MATRIX.exe
           </button>
         </div>
       `;
@@ -357,7 +664,8 @@ async function refreshData() {
     
   } finally {
     loading.classList.add('hidden');
-    refreshButton.innerHTML = 'Refresh Data';
+    refreshButton.innerHTML = '🔄 RESCAN MATRIX';
+    isRefreshing = false;
   }
 }
 
@@ -776,49 +1084,56 @@ function renderTriggers() {
   const container = document.getElementById('triggersContainer');
   
   if (filteredTriggers.length === 0) {
-    container.innerHTML = '<div class="text-center py-8 text-gray-500">No triggers found matching your filters.</div>';
+    container.innerHTML = `
+      <div class="neon-box rounded-lg p-8 text-center">
+        <div class="text-2xl mb-4">🔍</div>
+        <div class="text-lg font-bold neon-text mb-2" style="color: var(--neon-cyan);">NO THREATS DETECTED</div>
+        <div class="text-sm" style="color: var(--neon-purple);">>>> Neural scan complete - no matches found <<<</div>
+        <div class="text-xs mt-4 opacity-75">Adjust filter parameters to expand search matrix</div>
+      </div>
+    `;
     return;
   }
   
   container.innerHTML = filteredTriggers.map(trigger => `
-    <div class="bg-white rounded-lg shadow-md p-6 trigger-${trigger.triggerType} fade-in cursor-pointer hover:shadow-lg transition-shadow"
+    <div class="terminal-box lead-card priority-${trigger.priority} fade-in cursor-pointer p-4 mb-3 hover:bg-opacity-10 transition-all duration-300"
          onclick="showLeadDetails('${trigger.id}')">
-      <div class="flex justify-between items-start mb-4">
+      <div class="flex justify-between items-start mb-3">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-1 text-xs rounded-full bg-${getPriorityColor(trigger.priority)}-100 text-${getPriorityColor(trigger.priority)}-800">
+            <span class="px-2 py-1 text-xs font-bold" style="border: 1px solid var(--terminal-green); color: var(--terminal-green); background: transparent;">
               ${trigger.priority.toUpperCase()}
             </span>
-            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-              ${getTriggerLabel(trigger.triggerType)}
+            <span class="px-2 py-1 text-xs font-bold" style="border: 1px solid var(--terminal-green-dim); color: var(--terminal-green-dim); background: transparent;">
+              ${getTriggerIcon(trigger.triggerType)} ${getTriggerLabel(trigger.triggerType)}
             </span>
-            <span class="text-sm text-gray-500">${new Date(trigger.date).toLocaleDateString()}</span>
+            <span class="text-xs font-mono" style="color: var(--text-dim);">[${new Date(trigger.date).toLocaleDateString()}]</span>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">${trigger.title}</h3>
-          <p class="text-gray-600 mb-3">${trigger.description.substring(0, 150)}...</p>
-          <div class="text-sm font-medium text-blue-600">📊 ${trigger.company}</div>
+          <h3 class="text-sm font-bold mb-2" style="color: var(--terminal-green);">${trigger.title}</h3>
+          <p class="mb-2 text-xs leading-relaxed" style="color: var(--text-secondary);">${trigger.description.substring(0, 150)}...</p>
+          <div class="text-xs font-bold" style="color: var(--terminal-green);">TARGET: ${trigger.company}</div>
         </div>
         <div class="ml-4 text-right">
-          <div class="text-xs text-gray-500">Source:</div>
-          <div class="text-sm font-medium">${trigger.source} ${getSourceValidation(trigger.source)}</div>
-          <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-blue-600 hover:text-blue-800 underline">
-            📰 Click here to see source article
-          </a><br>
-          <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-green-600 hover:text-green-800 underline">
-            ${getCompanyLinkText(trigger.company)}
+          <div class="text-xs font-mono" style="color: var(--text-dim);">SOURCE:</div>
+          <div class="text-xs font-bold" style="color: var(--terminal-green-dim);">${trigger.source}</div>
+          <a href="${trigger.link}" target="_blank" onclick="event.stopPropagation();" class="text-xs underline font-mono block mt-1 hover:opacity-75" style="color: var(--terminal-cyan);">
+            🔗 SOURCE_LINK.exe
+          </a>
+          <a href="${generateCompanyContactUrl(trigger.company)}" target="_blank" onclick="event.stopPropagation();" class="text-xs text-green-400 hover:text-green-200 underline font-mono block mt-1">
+            🎯 ${getCompanyLinkText(trigger.company)}
           </a>
         </div>
       </div>
-      <div class="bg-green-50 border border-green-200 rounded p-3 mb-4">
-        <div class="text-sm font-medium text-green-800 mb-1">💡 Outreach Opportunity:</div>
-        <div class="text-sm text-green-700">${trigger.actionable}</div>
+      <div class="game-box rounded p-3 mb-4">
+        <div class="text-sm font-bold mb-1" style="color: var(--neon-pink);">💡 NEURAL ANALYSIS:</div>
+        <div class="text-sm text-green-300">${trigger.actionable}</div>
       </div>
       <div class="flex gap-3 mt-4">
-        <button onclick="event.stopPropagation(); openEmailModal('${trigger.id}')" class="cta-button flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-          📧 Generate Email
+        <button onclick="event.stopPropagation(); openEmailModal('${trigger.id}')" class="terminal-button mr-2">
+          EMAIL
         </button>
-        <button onclick="event.stopPropagation(); openLinkedInModal('${trigger.id}')" class="cta-button flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 text-sm font-medium">
-          💼 LinkedIn Post
+        <button onclick="event.stopPropagation(); openLinkedInModal('${trigger.id}')" class="terminal-button">
+          LINKEDIN
         </button>
       </div>
     </div>
@@ -890,12 +1205,12 @@ function showLeadDetails(triggerId) {
     <div class="space-y-6">
       <div>
         <h4 class="text-lg font-semibold mb-2">Company: ${trigger.company}</h4>
-        <p class="text-gray-600">${trigger.title}</p>
+        <p style="color: var(--text-readable);">${trigger.title}</p>
       </div>
       
       <div>
         <h5 class="font-semibold mb-2">Trigger Details:</h5>
-        <div class="bg-gray-50 p-4 rounded">
+        <div class="cyber-box p-4 rounded">
           <p><strong>Type:</strong> ${getTriggerLabel(trigger.triggerType)}</p>
           <p><strong>Priority:</strong> ${trigger.priority.toUpperCase()}</p>
           <p><strong>Date:</strong> ${new Date(trigger.date).toLocaleDateString()}</p>
@@ -912,13 +1227,13 @@ function showLeadDetails(triggerId) {
       
       <div>
         <h5 class="font-semibold mb-2">Potential Contacts:</h5>
-        <p class="text-xs text-gray-600 mb-2">💡 Visit ${trigger.company}'s website below to find their contact/investor relations pages with additional executives</p>
+        <p class="text-xs mb-2" style="color: var(--neon-cyan);">💡 Visit ${trigger.company}'s website below to find their contact/investor relations pages with additional executives</p>
         <div class="space-y-2">
           ${trigger.contacts.map(contact => `
             <div class="bg-blue-50 border border-blue-200 p-3 rounded flex justify-between items-center">
               <div>
                 <div class="font-medium">${contact.role}</div>
-                <div class="text-sm text-gray-600">${contact.email}</div>
+                <div class="text-sm" style="color: var(--text-readable);">${contact.email}</div>
               </div>
               <button onclick="event.stopPropagation(); copyEmail('${contact.email}')" class="text-blue-600 hover:text-blue-800">
                 📧 Copy
@@ -931,7 +1246,7 @@ function showLeadDetails(triggerId) {
       <div>
         <h5 class="font-semibold mb-2">📧 Generated Email Copy:</h5>
         <div class="bg-blue-50 border border-blue-200 p-4 rounded email-preview">
-          <div class="text-sm text-gray-700 whitespace-pre-line" id="emailContent-${trigger.id}">
+          <div class="text-sm whitespace-pre-line" id="emailContent-${trigger.id}" style="color: var(--text-readable);">
             ${generatePersonalizedEmail(trigger)}
           </div>
         </div>
@@ -1021,6 +1336,35 @@ function exportLeads() {
 function getPriorityColor(priority) {
   const colors = { critical: 'red', high: 'orange', medium: 'yellow' };
   return colors[priority] || 'gray';
+}
+
+function getPriorityNeonColor(priority) {
+  const colors = { critical: 'pink-400', high: 'orange-400', medium: 'green-400' };
+  return colors[priority] || 'cyan-400';
+}
+
+function getPriorityBgColor(priority) {
+  const colors = { critical: 'red-900', high: 'amber-900', medium: 'green-900', low: 'slate-700' };
+  return colors[priority] || 'slate-700';
+}
+
+function getPriorityTextColor(priority) {
+  const colors = { critical: 'red-200', high: 'amber-200', medium: 'green-200', low: 'slate-300' };
+  return colors[priority] || 'slate-300';
+}
+
+function getTriggerIcon(triggerType) {
+  const icons = {
+    'warning-letter': '📋',
+    'patent-expiry': '🔒',
+    'compliance-issue': '⚠️',
+    'trial-difficulty': '🧪',
+    'investment-need': '💰',
+    'regulatory-delay': '⏰',
+    'orphan-drug': '🏥',
+    'merger-acquisition': '🤝'
+  };
+  return icons[triggerType] || '🎯';
 }
 
 function getTriggerLabel(triggerType) {
@@ -1317,112 +1661,6 @@ function copyEmailContent(triggerId) {
   }
 }
 
-// Modal functions for CTA buttons
-function openEmailModal(triggerId) {
-  const trigger = allTriggers.find(t => t.id === triggerId);
-  if (!trigger) return;
-  
-  const email = generatePersonalizedEmail(trigger);
-  const modalContent = `
-    <div class="p-4">
-      <h3 class="text-lg font-semibold mb-3">📧 Generated Email for ${trigger.company}</h3>
-      <div class="bg-gray-50 p-4 rounded border max-h-64 overflow-y-auto">
-        <pre class="text-sm whitespace-pre-wrap">${email}</pre>
-      </div>
-      <div class="mt-4 flex gap-3">
-        <button onclick="copyEmailContent()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          📋 Copy Email
-        </button>
-        <button onclick="closeEmailModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          Close
-        </button>
-      </div>
-    </div>
-  `;
-  
-  // Create or update modal
-  let modal = document.getElementById('emailModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'emailModal';
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
-    document.body.appendChild(modal);
-  }
-  
-  modal.innerHTML = `<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4">${modalContent}</div>`;
-  modal.classList.remove('hidden');
-  modal.dataset.email = email; // Store email for copying
-}
-
-function openLinkedInModal(triggerId) {
-  const trigger = allTriggers.find(t => t.id === triggerId);
-  if (!trigger) return;
-  
-  const linkedinPost = generateLinkedInPost(trigger);
-  const modalContent = `
-    <div class="p-4">
-      <h3 class="text-lg font-semibold mb-3">🔗 LinkedIn Post for ${trigger.company}</h3>
-      <div class="bg-gray-50 p-4 rounded border max-h-64 overflow-y-auto">
-        <pre class="text-sm whitespace-pre-wrap">${linkedinPost}</pre>
-      </div>
-      <div class="mt-4 flex gap-3">
-        <button onclick="copyLinkedInContent()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          📋 Copy Post
-        </button>
-        <button onclick="closeLinkedInModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          Close
-        </button>
-      </div>
-    </div>
-  `;
-  
-  // Create or update modal
-  let modal = document.getElementById('linkedinModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'linkedinModal';
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
-    document.body.appendChild(modal);
-  }
-  
-  modal.innerHTML = `<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4">${modalContent}</div>`;
-  modal.classList.remove('hidden');
-  modal.dataset.post = linkedinPost; // Store post for copying
-}
-
-function closeEmailModal() {
-  const modal = document.getElementById('emailModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function closeLinkedInModal() {
-  const modal = document.getElementById('linkedinModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function copyEmailContent() {
-  const modal = document.getElementById('emailModal');
-  const email = modal?.dataset.email;
-  if (email) {
-    navigator.clipboard.writeText(email).then(() => {
-      alert('Email copied to clipboard!');
-    }).catch(() => {
-      alert('Failed to copy. Please select and copy manually.');
-    });
-  }
-}
-
-function copyLinkedInContent() {
-  const modal = document.getElementById('linkedinModal');
-  const post = modal?.dataset.post;
-  if (post) {
-    navigator.clipboard.writeText(post).then(() => {
-      alert('LinkedIn post copied to clipboard!');
-    }).catch(() => {
-      alert('Failed to copy. Please select and copy manually.');
-    });
-  }
-}
 
 function generateLinkedInPost(trigger) {
   const detailedInsights = {
@@ -1914,6 +2152,93 @@ function clearFilters() {
   document.getElementById('triggerFilter').value = '';
   document.getElementById('priorityFilter').value = '';
   filterTriggers();
+}
+
+// Modal functions for email and LinkedIn
+function openEmailModal(triggerId) {
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) return;
+  
+  const modalContent = document.getElementById('modalContent');
+  const emailContent = generatePersonalizedEmail(trigger);
+  
+  modalContent.innerHTML = `
+    <div style="color: var(--neon-cyan); font-family: 'Space Mono', monospace;">
+      <h3 class="text-xl font-bold mb-4">📧 EMAIL_GENERATOR.EXE</h3>
+    </div>
+    <div class="cyber-box rounded p-4 mb-4">
+      <h4 class="font-bold mb-2" style="color: var(--neon-cyan);">Generated Email:</h4>
+      <pre class="text-sm whitespace-pre-wrap overflow-auto max-h-80" style="color: var(--text-readable);">${emailContent}</pre>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="copyToClipboard('${emailContent.replace(/'/g, "\\'")}')" class="cyber-box px-4 py-2 rounded font-bold">
+        📋 COPY_EMAIL.exe
+      </button>
+      <button onclick="closeModal()" class="game-box px-4 py-2 rounded font-bold">
+        ❌ CLOSE_TERMINAL
+      </button>
+    </div>
+  `;
+  
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+
+function openLinkedInModal(triggerId) {
+  console.log('LinkedIn modal clicked for trigger:', triggerId);
+  const trigger = allTriggers.find(t => t.id === triggerId);
+  if (!trigger) {
+    console.error('Trigger not found:', triggerId);
+    return;
+  }
+  
+  const modalContent = document.getElementById('modalContent');
+  if (!modalContent) {
+    console.error('Modal content element not found');
+    return;
+  }
+  
+  const linkedInContent = generateLinkedInPost(trigger);
+  
+  modalContent.innerHTML = `
+    <div style="color: var(--terminal-green); font-family: 'JetBrains Mono', monospace;">
+      <h3 class="text-lg font-bold mb-4">LINKEDIN POST GENERATOR</h3>
+    </div>
+    <div class="terminal-box p-4 mb-4">
+      <h4 class="font-bold mb-2 text-xs" style="color: var(--terminal-green-dim);">Generated Content:</h4>
+      <pre class="text-xs whitespace-pre-wrap overflow-auto max-h-80" style="color: var(--text-primary);">${linkedInContent}</pre>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="copyToClipboard('${linkedInContent.replace(/'/g, "\\'")}')" class="terminal-button">
+        COPY
+      </button>
+      <button onclick="closeModal()" class="terminal-button">
+        CLOSE
+      </button>
+    </div>
+  `;
+  
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('leadModal').classList.add('hidden');
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    // Show success feedback
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '✅ COPIED!';
+    button.style.background = 'linear-gradient(45deg, var(--neon-cyan), var(--neon-pink))';
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.style.background = '';
+    }, 2000);
+  }).catch(function(err) {
+    console.error('Failed to copy: ', err);
+    alert('Copy failed. Please manually select and copy the content.');
+  });
 }
 
 // Auto-refresh every 30 minutes
