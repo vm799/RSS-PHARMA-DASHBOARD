@@ -270,9 +270,146 @@
   .stats-counter {
     font-size: 2.5rem;
     font-weight: 700;
-    font-family: 'Space Mono', monospace;
-    text-shadow: none;
+    font-family: 'JetBrains Mono', monospace;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     animation: gentle-pulse 4s ease-in-out infinite;
+    color: #ff0080;
+  }
+  
+  /* Metric Box Styles */
+  .neon-pink-box {
+    background: var(--card-bg);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.3);
+  }
+  
+  .neon-pink-box:hover {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255, 0, 128, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  .neon-pink-box .stats-counter {
+    color: var(--neon-pink);
+  }
+  
+  .neon-purple-box {
+    background: var(--card-bg);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.3);
+  }
+  
+  .neon-purple-box:hover {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 20px rgba(128, 0, 255, 0.5);
+    transform: translateY(-2px);
+  }
+  
+  .neon-purple-box .stats-counter {
+    color: var(--neon-purple);
+  }
+  
+  .game-box .stats-counter {
+    color: var(--neon-cyan);
+  }
+  
+  .cyber-box .stats-counter {
+    color: var(--neon-orange);
+  }
+  
+  .game-box {
+    background: var(--card-bg);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.3);
+  }
+  
+  .game-box:hover {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  .cyber-box {
+    background: var(--card-bg);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 15px rgba(128, 0, 255, 0.3);
+  }
+  
+  .cyber-box:hover {
+    border-color: var(--neon-orange);
+    box-shadow: 0 0 20px rgba(255, 128, 0, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  /* Mobile Responsive Styles */
+  @media (max-width: 768px) {
+    body {
+      font-size: 12px;
+    }
+    
+    .stats-counter {
+      font-size: 1.8rem;
+    }
+    
+    .container {
+      padding: 1rem;
+    }
+    
+    .terminal-window {
+      margin: 0.5rem;
+    }
+    
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .md\\:grid-cols-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .md\\:grid-cols-3 {
+      grid-template-columns: 1fr;
+    }
+    
+    .text-2xl {
+      font-size: 1.5rem;
+    }
+    
+    .text-xl {
+      font-size: 1.25rem;
+    }
+    
+    .text-lg {
+      font-size: 1.125rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .stats-counter {
+      font-size: 1.5rem;
+    }
+    
+    .container {
+      padding: 0.5rem;
+    }
+    
+    .md\\:grid-cols-4 {
+      grid-template-columns: 1fr;
+    }
+    
+    .flex {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .text-sm {
+      font-size: 0.75rem;
+    }
+    
+    .text-xs {
+      font-size: 0.65rem;
+    }
   }
   
   @keyframes gentle-pulse {
@@ -414,8 +551,10 @@
         <div>
           <label class="block text-sm font-bold mb-2 neon-text" style="color: var(--neon-green);">🎮 NEURAL ACTIONS:</label>
           <div class="space-y-2">
-            <button onclick="refreshData()" class="w-full cyber-box px-3 py-2 rounded font-bold text-xs">
-              <span id="refreshButton">🔄 RESCAN MATRIX</span>
+            <button onclick="refreshData()" class="w-full px-6 py-4 rounded font-bold text-sm transition-all duration-300 hover:transform hover:scale-105" style="background: linear-gradient(45deg, var(--terminal-cyan), #0088cc); color: var(--terminal-bg); border: 2px solid var(--terminal-cyan); box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);">
+              <span id="refreshButton" class="flex items-center justify-center gap-2">
+                🔄 <span class="font-bold tracking-wide">RESCAN MATRIX</span>
+              </span>
             </button>
           </div>
         </div>
@@ -695,7 +834,7 @@ async function refreshData() {
     
   } finally {
     loading.classList.add('hidden');
-    refreshButton.innerHTML = '🔄 RESCAN MATRIX';
+    refreshButton.innerHTML = '🔄 <span class="font-bold tracking-wide">RESCAN MATRIX</span>';
     isRefreshing = false;
   }
 }
